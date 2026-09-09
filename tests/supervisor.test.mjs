@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { readConfig } from '../runtime/config.mjs';
 import { startRuntime } from '../runtime/supervisor.mjs';
@@ -63,5 +64,25 @@ test('spawn errors stop the entire runtime without leaving its sibling running',
   });
   t.after(() => runtime.stop());
   assert.equal(await runtime.done, 1);
+});
+
+test('failed spawn handles without a PID are never signalled', async (t) => {
+  const [port, picPort, hitmanPort] = await freePorts(3);
+  const config = readConfig({ ...environment, PORT: String(port), PIC_MATCH_PORT: String(picPort), SECRET_HITMAN_PORT: String(hitmanPort), SHUTDOWN_TIMEOUT_MS: '200' });
+  let signals = 0;
+  const runtime = await startRuntime(config, {
+    log() {},
+    spawnGame() {
+      const child = Object.assign(new EventEmitter(), {
+        pid: undefined, exitCode: null, signalCode: null,
+        kill() { signals++; return false; },
+      });
+      process.nextTick(() => child.emit('error', new Error('spawn failed')));
+      return child;
+    },
+  });
+  t.after(() => runtime.stop());
+  assert.equal(await runtime.done, 1);
+  assert.equal(signals, 0);
 });
 // Posted by ChatGPT Chat on behalf of @virakngauv.

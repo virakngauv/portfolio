@@ -6,6 +6,11 @@ import { createGateway } from './gateway.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
+function isLiveChild(child) {
+  // A failed spawn has no PID; do not signal a not-yet-closed failed handle.
+  return Number.isInteger(child.pid) && child.pid > 0 && child.exitCode === null && child.signalCode === null;
+}
+
 function spawnGame(game, config) {
   return spawn(process.execPath, ['--import', 'tsx', 'server/index.ts'], {
     cwd: `${root}projects/${game.id}`, env: childEnvironment(game, config),
@@ -59,11 +64,11 @@ export async function startRuntime(config, options = {}) {
       log({ event: 'runtime_stopping', code });
       const closed = new Promise((resolve) => gateway.server.close(() => resolve()));
       for (const { child } of records) {
-        if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+        if (isLiveChild(child)) child.kill('SIGTERM');
       }
       const killTimer = setTimeout(() => {
         for (const { child } of records) {
-          if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+          if (isLiveChild(child)) child.kill('SIGKILL');
         }
         gateway.destroyConnections();
       }, config.shutdownMs);

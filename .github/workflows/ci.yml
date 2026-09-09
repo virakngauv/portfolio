@@ -1,0 +1,63 @@
+name: Runtime CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: node scripts/check.mjs
+      - run: node --test tests/*.test.mjs
+  container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Verify pinned checkouts
+        run: |
+          git submodule status --recursive
+          if git submodule status --recursive | grep -Eq '^[-+U]'; then exit 1; fi
+      - name: Build server-only runtime
+        run: docker build --target runtime -t portfolio-runtime:test .
+      - name: Run under the target memory ceiling
+        run: |
+          docker run -d --name runtime --memory=512m --memory-swap=512m --cpus=1 \
+            --env-file .env.example portfolio-runtime:test
+          for attempt in $(seq 1 60); do
+            if [ "$(docker inspect --format '{{.State.Health.Status}}' runtime)" = healthy ]; then exit 0; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' runtime)" != true ]; then break; fi
+            sleep 2
+          done
+          docker logs runtime
+          exit 1
+      - name: Real Socket.IO smoke checks through the gateway
+        run: docker run --rm --network container:runtime --env-file .env.example portfolio-runtime:test node scripts/smoke.mjs
+      - name: Check memory and graceful container shutdown
+        run: |
+          docker stats --no-stream runtime
+          docker stop --time 15 runtime
+          test "$(docker inspect --format '{{.State.ExitCode}}' runtime)" = 0
+          test "$(docker inspect --format '{{.State.OOMKilled}}' runtime)" = false
+      - name: Logs and cleanup
+        if: always()
+        run: |
+          docker logs runtime || true
+          docker rm -f runtime || true
+# Posted by ChatGPT Chat on behalf of @virakngauv.

@@ -33,7 +33,7 @@ Initial source pins are Pic Match `39e7dee11f4ef022aae43d8cf6b8941973d2d392` and
 
 ## Local setup
 
-Use Node.js 24 (Node.js 22+ is supported by the runtime) and pnpm 11.9.0, matching the initial upstream manifests. No root dependencies need installing.
+Use Node.js 24 (Node.js 22.13+ is supported by the runtime) and pnpm 11.9.0, matching the initial upstream manifests. No root dependencies need installing.
 
 ```bash
 git clone --recurse-submodules https://github.com/virakngauv/portfolio.git

@@ -4,10 +4,11 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readConfig } from '../runtime/config.mjs';
 import { startRuntime } from '../runtime/supervisor.mjs';
-import { freePort, waitFor, request, environment } from './helpers.mjs';
+import { freePorts, waitFor, request, environment } from './helpers.mjs';
 
 async function fixture(t, extra = {}, configExtra = {}) {
-  const config = readConfig({ ...environment, PORT: String(await freePort()), PIC_MATCH_PORT: String(await freePort()), SECRET_HITMAN_PORT: String(await freePort()), SHUTDOWN_TIMEOUT_MS: '200', ...configExtra });
+  const [port, picPort, hitmanPort] = await freePorts(3);
+  const config = readConfig({ ...environment, PORT: String(port), PIC_MATCH_PORT: String(picPort), SECRET_HITMAN_PORT: String(hitmanPort), SHUTDOWN_TIMEOUT_MS: '200', ...configExtra });
   const runtime = await startRuntime(config, {
     log() {}, checkIntervalMs: 25,
     spawnGame(game) {
@@ -54,7 +55,8 @@ test('children ignoring SIGTERM are killed after the shutdown deadline', async (
 });
 
 test('spawn errors stop the entire runtime without leaving its sibling running', async (t) => {
-  const config = readConfig({ ...environment, PORT: String(await freePort()), PIC_MATCH_PORT: String(await freePort()), SECRET_HITMAN_PORT: String(await freePort()), SHUTDOWN_TIMEOUT_MS: '200' });
+  const [port, picPort, hitmanPort] = await freePorts(3);
+  const config = readConfig({ ...environment, PORT: String(port), PIC_MATCH_PORT: String(picPort), SECRET_HITMAN_PORT: String(hitmanPort), SHUTDOWN_TIMEOUT_MS: '200' });
   const runtime = await startRuntime(config, {
     log() {},
     spawnGame() { return spawn('/no/such/portfolio-executable', [], { stdio: 'ignore' }); },

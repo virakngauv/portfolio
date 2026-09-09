@@ -8,11 +8,11 @@ export async function listen(server) {
   });
   return server.address().port;
 }
-export async function freePort() {
-  const server = http.createServer();
-  const port = await listen(server);
-  await new Promise((resolve) => server.close(resolve));
-  return port;
+export async function freePorts(count) {
+  // Reserve the whole set at once so the OS cannot return the same port twice.
+  const servers = Array.from({ length: count }, () => http.createServer());
+  try { return await Promise.all(servers.map(listen)); }
+  finally { await Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve)))); }
 }
 export async function waitFor(condition, timeout = 5000) {
   const end = Date.now() + timeout;

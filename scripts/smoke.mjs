@@ -9,8 +9,8 @@ for (const game of config.games) {
   const child = spawn(process.execPath, ['--import', 'tsx', `${root}scripts/smoke-game.mjs`], {
     cwd: `${root}projects/${game.id}`,
     env: {
-      ...process.env, SMOKE_GAME: game.id, SMOKE_HOST: game.hosts[0],
-      SMOKE_ORIGIN: game.origins[0], SMOKE_URL: `http://127.0.0.1:${config.port}`,
+      ...process.env, SMOKE_GAME: game.id,
+      SMOKE_ORIGIN: game.origins[0], SMOKE_URL: `http://${game.hosts[0]}:${config.port}`,
     },
     stdio: 'inherit',
   });

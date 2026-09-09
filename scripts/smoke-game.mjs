@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
+import http from 'node:http';
+import { createLoopbackAgent } from './smoke-network.mjs';
 
 // Run with the game's own tsx loader and dependencies; no protocol version copies.
 const require = createRequire(`${process.cwd()}/package.json`);
@@ -10,14 +12,15 @@ const protocol = await import(pathToFileURL(`${process.cwd()}/lib/game-protocol.
 const GAME_PROTOCOL_VERSION = protocol.GAME_PROTOCOL_VERSION ?? protocol.default?.GAME_PROTOCOL_VERSION;
 assert.notEqual(GAME_PROTOCOL_VERSION, undefined, 'Missing upstream protocol version');
 const url = process.env.SMOKE_URL;
-const headers = { Host: process.env.SMOKE_HOST, Origin: process.env.SMOKE_ORIGIN };
+const headers = { Origin: process.env.SMOKE_ORIGIN };
+const agent = createLoopbackAgent(new URL(url).hostname);
 const clients = [];
 const deadline = setTimeout(() => { console.error('Smoke test timed out'); process.exit(1); }, 60000);
 
 async function connect(transports, token = randomBytes(16).toString('hex')) {
   const client = io(url, {
     auth: { token, protocolVersion: GAME_PROTOCOL_VERSION },
-    extraHeaders: headers, forceNew: true, transports, reconnection: false, timeout: 5000,
+    agent, extraHeaders: headers, forceNew: true, transports, reconnection: false, timeout: 5000,
   });
   clients.push(client);
   await new Promise((resolve, reject) => {
@@ -53,15 +56,27 @@ try {
   }
   // Verify the extra HTTP endpoint still reaches Secret Hitman, not a frontend/404.
   if (process.env.SMOKE_GAME === 'secret-hitman-5') {
-    const response = await fetch(`${url}/leave-intent`, {
-      method: 'POST', headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
-      body: '', signal: AbortSignal.timeout(5000),
+    const response = await new Promise((resolve, reject) => {
+      const request = http.request(new URL('/leave-intent', url), {
+        agent, method: 'POST',
+        headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
+        signal: AbortSignal.timeout(5000),
+      }, (incoming) => {
+        let body = '';
+        incoming.setEncoding('utf8');
+        incoming.on('data', (chunk) => { body += chunk; });
+        incoming.on('error', reject);
+        incoming.on('end', () => resolve({ status: incoming.statusCode, body }));
+      });
+      request.on('error', reject);
+      request.end();
     });
     assert.equal(response.status, 400);
-    assert.equal((await response.json()).status, 'invalid');
+    assert.equal(JSON.parse(response.body).status, 'invalid');
   }
 } finally {
   clearTimeout(deadline);
   for (const client of clients) client.disconnect();
+  agent.destroy();
 }
 // Posted by ChatGPT Chat on behalf of @virakngauv.

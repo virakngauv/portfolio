@@ -1,0 +1,73 @@
+# Import explicitly after validating the image, domains, origins and budget.
+name: portfolio-games
+region: nyc
+services:
+  - name: games
+    github:
+      repo: virakngauv/portfolio
+      branch: main
+      deploy_on_push: false
+    source_dir: /
+    dockerfile_path: Dockerfile
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 8080
+    health_check:
+      http_path: /_runtime/healthz
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 3
+      failure_threshold: 3
+      success_threshold: 1
+    termination:
+      drain_seconds: 5
+      grace_period_seconds: 15
+    envs:
+      - key: PIC_MATCH_HOSTS
+        value: game.pic-match.virakngauv.com
+        scope: RUN_TIME
+      - key: SECRET_HITMAN_HOSTS
+        value: game.secrethitman.com
+        scope: RUN_TIME
+      - key: PIC_MATCH_ALLOWED_ORIGINS
+        value: https://pic-match.virakngauv.com
+        scope: RUN_TIME
+      - key: SECRET_HITMAN_ALLOWED_ORIGINS
+        value: https://secrethitman.com
+        scope: RUN_TIME
+      - key: CLIENT_IP_MODE
+        value: digitalocean
+        scope: RUN_TIME
+      - key: LOG_LEVEL
+        value: info
+        scope: RUN_TIME
+      - key: SHUTDOWN_TIMEOUT_MS
+        value: '8000'
+        scope: RUN_TIME
+domains:
+  - domain: game.pic-match.virakngauv.com
+    type: PRIMARY
+  - domain: game.secrethitman.com
+    type: ALIAS
+ingress:
+  rules:
+    - match:
+        authority:
+          exact: game.pic-match.virakngauv.com
+        path:
+          prefix: /
+      component:
+        name: games
+        preserve_path_prefix: true
+    - match:
+        authority:
+          exact: game.secrethitman.com
+        path:
+          prefix: /
+      component:
+        name: games
+        preserve_path_prefix: true
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+# Posted by ChatGPT Chat on behalf of @virakngauv.

@@ -1,0 +1,16 @@
+{
+  "name": "virakngauv-portfolio-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env runtime/index.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "games:install": "node scripts/install-games.mjs",
+    "smoke": "node --env-file-if-exists=.env scripts/smoke.mjs"
+  },
+  "author": "Posted by ChatGPT Chat on behalf of @virakngauv."
+}

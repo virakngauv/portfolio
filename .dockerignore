@@ -1,0 +1,10 @@
+**/.git
+**/node_modules
+**/.next
+**/.env*
+**/.npm-cache
+**/.pnpm-store
+**/coverage
+**/test-results
+**/playwright-report
+# Posted by ChatGPT Chat on behalf of @virakngauv.

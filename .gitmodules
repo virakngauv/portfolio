@@ -1,0 +1,7 @@
+[submodule "projects/pic-match"]
+    path = projects/pic-match
+    url = https://github.com/virakngauv/pic-match.git
+[submodule "projects/secret-hitman-5"]
+    path = projects/secret-hitman-5
+    url = https://github.com/virakngauv/secret-hitman-5.git
+# Posted by ChatGPT Chat on behalf of @virakngauv.

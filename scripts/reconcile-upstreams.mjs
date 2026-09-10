@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection } from './release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease } from './release-policy.mjs';
 
 const repo = 'virakngauv/portfolio';
 const branch = 'codex-upstream-release';
@@ -67,10 +67,17 @@ if (pulls.length > 1) throw new Error('Multiple release PRs');
 const existing = pulls[0];
 if (existing) {
   if (existing.user.login !== process.env.PORTFOLIO_BOT_LOGIN) throw new Error('Release PR is not owned by this App');
-  assertPinOnly(pages(`repos/${repo}/pulls/${existing.number}/files`), projects);
+  const existingFiles = pages(`repos/${repo}/pulls/${existing.number}/files`);
+  assertPinOnly(existingFiles, projects);
   // Never rewrite a human edit on the automation branch.
   const commits = pages(`repos/${repo}/pulls/${existing.number}/commits`);
   if (commits.some((commit) => commit.author?.login !== process.env.PORTFOLIO_BOT_LOGIN)) throw new Error('Release branch contains another author');
+  // Keep the tested candidate intact if another project's current head is not ready.
+  // A later reconciliation can replace the whole batch without dropping a pin.
+  if (shouldDeferRelease(existingFiles, changes)) {
+    console.log('Deferring batch update to preserve existing tested release pins');
+    process.exit(0);
+  }
 }
 const refs = api(`repos/${repo}/git/matching-refs/heads/${branch}`);
 const old = refs.find((ref) => ref.ref === `refs/heads/${branch}`)?.object.sha;

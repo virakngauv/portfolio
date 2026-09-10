@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection } from '../scripts/release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease } from '../scripts/release-policy.mjs';
 
 const project = { repository: 'owner/game', path: 'projects/game', branch: 'main', requiredJobs: ['Quality', 'End-to-end'] };
 const sha = 'a'.repeat(40);
@@ -46,4 +46,12 @@ test('release guard rejects missing PR protection, destructive updates, and bypa
     assert.throws(() => assertPullRequestProtection({ ...protection, required_pull_request_reviews: { bypass_pull_request_allowances: { [kind]: [{ id: 1 }] } } }));
   }
   assert.throws(() => assertPullRequestProtection(undefined));
+});
+
+test('pending batch retains tested pins while another upstream head is ineligible', () => {
+  const files = [{ filename: 'projects/a' }, { filename: 'projects/b' }];
+  assert.equal(shouldDeferRelease(files, [{ path: 'projects/b' }]), true);
+  assert.equal(shouldDeferRelease(files, []), true);
+  assert.equal(shouldDeferRelease(files, [{ path: 'projects/a' }, { path: 'projects/b' }]), false);
+  assert.equal(shouldDeferRelease([], [{ path: 'projects/c' }]), false);
 });

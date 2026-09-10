@@ -32,3 +32,7 @@ export function assertPullRequestProtection(protection) {
     throw new Error('Auto-merge requires pull requests without bypass allowances, force pushes, or deletions');
   }
 }
+
+export function shouldDeferRelease(files, changes) {
+  return files.some((file) => !changes.some((change) => change.path === file.filename));
+}

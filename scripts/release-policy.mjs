@@ -36,3 +36,12 @@ export function assertPullRequestProtection(protection) {
 export function shouldDeferRelease(files, changes) {
   return files.some((file) => !changes.some((change) => change.path === file.filename));
 }
+
+export function autoMergeArgs(pr, expectedHead, repo, attribution) {
+  if (pr.state !== 'open' || pr.head.sha !== expectedHead) throw new Error('PR changed before auto-merge request');
+  if (pr.auto_merge) return null;
+  const issue = /Closes #(\d+)/.exec(pr.body ?? '')?.[1];
+  if (!issue) throw new Error('Release PR has no tracking issue');
+  return ['pr', 'merge', String(pr.number), '--repo', repo, '--auto', '--squash',
+    '--match-head-commit', expectedHead, '--body', `Closes #${issue}\n\n${attribution}`];
+}

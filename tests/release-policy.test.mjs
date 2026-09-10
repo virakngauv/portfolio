@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease } from '../scripts/release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from '../scripts/release-policy.mjs';
 
 const project = { repository: 'owner/game', path: 'projects/game', branch: 'main', requiredJobs: ['Quality', 'End-to-end'] };
 const sha = 'a'.repeat(40);
@@ -54,4 +54,16 @@ test('pending batch retains tested pins while another upstream head is ineligibl
   assert.equal(shouldDeferRelease(files, []), true);
   assert.equal(shouldDeferRelease(files, [{ path: 'projects/a' }, { path: 'projects/b' }]), false);
   assert.equal(shouldDeferRelease([], [{ path: 'projects/c' }]), false);
+});
+
+test('deferred candidate retries missing auto-merge on exactly its validated head', () => {
+  const pr = { number: 7, state: 'open', head: { sha }, body: 'Closes #3', auto_merge: null };
+  assert.equal(shouldDeferRelease([{ filename: project.path }], []), true);
+  const args = autoMergeArgs(pr, sha, 'owner/portfolio', 'App attribution');
+  assert.equal(args[args.indexOf('--match-head-commit') + 1], sha);
+  assert.ok(args.includes('--auto'));
+  assert.equal(autoMergeArgs({ ...pr, auto_merge: {} }, sha, 'owner/portfolio', ''), null);
+  assert.throws(() => autoMergeArgs({ ...pr, head: { sha: 'b'.repeat(40) } }, sha, '', ''));
+  assert.throws(() => autoMergeArgs({ ...pr, state: 'closed' }, sha, '', ''));
+  assert.throws(() => autoMergeArgs({ ...pr, body: '' }, sha, '', ''));
 });

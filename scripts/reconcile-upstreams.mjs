@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease } from './release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from './release-policy.mjs';
 
 const repo = 'virakngauv/portfolio';
 const branch = 'codex-upstream-release';
@@ -60,7 +60,6 @@ for (const project of projects) {
   if (comparison.status !== 'ahead') throw new Error(`Refusing non-forward pin update for ${project.repository}`);
   changes.push({ ...project, sha, previous: pin.sha, runUrl: run.html_url });
 }
-if (!changes.length) { console.log('No eligible pin updates'); process.exit(0); }
 
 const pulls = api(`repos/${repo}/pulls?state=open&head=virakngauv:${branch}&base=main`);
 if (pulls.length > 1) throw new Error('Multiple release PRs');
@@ -75,10 +74,13 @@ if (existing) {
   // Keep the tested candidate intact if another project's current head is not ready.
   // A later reconciliation can replace the whole batch without dropping a pin.
   if (shouldDeferRelease(existingFiles, changes)) {
+    ensureAutoMerge(existing.number, existing.head.sha);
     console.log('Deferring batch update to preserve existing tested release pins');
     process.exit(0);
   }
 }
+if (!changes.length) { console.log('No eligible pin updates'); process.exit(0); }
+
 const refs = api(`repos/${repo}/git/matching-refs/heads/${branch}`);
 const old = refs.find((ref) => ref.ref === `refs/heads/${branch}`)?.object.sha;
 if (old && api(`repos/${repo}/commits/${old}`).author?.login !== process.env.PORTFOLIO_BOT_LOGIN) {
@@ -121,9 +123,11 @@ const pr = existing
   ? api(`repos/${repo}/pulls/${existing.number}`, { title: 'chore: release tested upstream revisions', body }, 'PATCH')
   : api(`repos/${repo}/pulls`, { title: 'chore: release tested upstream revisions', head: branch, base: 'main', body });
 assertPinOnly(pages(`repos/${repo}/pulls/${pr.number}/files`), projects);
-if (pr.head.sha !== head) throw new Error('PR head changed before auto-merge request');
-if (!pr.auto_merge) {
-  execFileSync('gh', ['pr', 'merge', String(pr.number), '--repo', repo, '--auto', '--squash',
-    '--match-head-commit', head, '--body', `Closes #${issueNumber}\n\n${attribution}`], { stdio: 'inherit' });
-}
+ensureAutoMerge(pr.number, head);
 console.log(`Release PR: ${pr.html_url}`);
+
+function ensureAutoMerge(number, expectedHead) {
+  const latest = api(`repos/${repo}/pulls/${number}`);
+  const args = autoMergeArgs(latest, expectedHead, repo, attribution);
+  if (args) execFileSync('gh', args, { stdio: 'inherit' });
+}

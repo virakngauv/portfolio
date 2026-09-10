@@ -86,7 +86,7 @@ Both HTTP requests and WebSocket upgrades use the same exact-host and origin pol
 
 ## Deployment lessons and troubleshooting
 
-For automatic releases after upstream merges, follow [automatic backend releases](docs/automatic-releases.md). The receiver batches validated gitlink updates into a tested PR; activate it only after credentials and required branch checks are configured. The manual setup below keeps auto-deployment off until that activation step.
+For automatic releases after upstream merges, follow [automatic backend releases](docs/automatic-releases.md). The receiver batches validated gitlink updates into a tested PR; activate it only after credentials and required branch checks are configured. During initial manual setup, set `deploy_on_push: false`. After GitHub App credentials and required branch protections are configured, enable `deploy_on_push: true` in the live DigitalOcean App Spec as part of activation. The checked-in example uses the activated state; copying it does not update the live app.
 
 The September 9, 2026 validation passed all 21 offline tests, an ARM64 Docker image build, and both games' real-server smoke checks under a 512 MiB / one-CPU limit with swap disabled. Shutdown completed with exit 0 and no OOM. Container memory snapshots were 135.2 MiB after smoke testing and 142.6 MiB after manual use; these are snapshots, not peak measurements or capacity guarantees. The user also reported successful local multiplayer/reconnect checks and both deployed games working after correcting the origin allowlist. Sustained-load and maximum-player capacity remain unverified. This supplements the earlier initialization status in [the deployment runbook](docs/deployment.md).
 

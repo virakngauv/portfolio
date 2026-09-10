@@ -21,3 +21,14 @@ export function assertProtected(rule) {
     throw new Error('Auto-merge requires enforced, up-to-date unit and container-smoke checks on main');
   }
 }
+
+export function assertPullRequestProtection(protection) {
+  const reviews = protection?.required_pull_request_reviews;
+  const bypass = reviews?.bypass_pull_request_allowances;
+  if (protection?.allow_force_pushes?.enabled !== false
+      || protection?.allow_deletions?.enabled !== false
+      || !reviews
+      || (bypass && ['users', 'teams', 'apps'].some((kind) => bypass[kind]?.length))) {
+    throw new Error('Auto-merge requires pull requests without bypass allowances, force pushes, or deletions');
+  }
+}

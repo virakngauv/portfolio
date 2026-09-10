@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected } from '../scripts/release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection } from '../scripts/release-policy.mjs';
 
 const project = { repository: 'owner/game', path: 'projects/game', branch: 'main', requiredJobs: ['Quality', 'End-to-end'] };
 const sha = 'a'.repeat(40);
@@ -34,4 +34,16 @@ test('auto-merge fails closed without strict enforced integration checks', () =>
   for (const changed of [{ requiresStatusChecks: false }, { requiresStrictStatusChecks: false }, { isAdminEnforced: false }, { requiredStatusCheckContexts: ['unit'] }]) {
     assert.throws(() => assertProtected({ ...rule, ...changed }));
   }
+});
+
+test('release guard rejects missing PR protection, destructive updates, and bypass actors', () => {
+  const protection = { allow_force_pushes: { enabled: false }, allow_deletions: { enabled: false }, required_pull_request_reviews: { required_approving_review_count: 0 } };
+  assertPullRequestProtection(protection);
+  for (const changed of [{ allow_force_pushes: { enabled: true } }, { allow_deletions: { enabled: true } }, { required_pull_request_reviews: null }, { allow_deletions: undefined }]) {
+    assert.throws(() => assertPullRequestProtection({ ...protection, ...changed }));
+  }
+  for (const kind of ['users', 'teams', 'apps']) {
+    assert.throws(() => assertPullRequestProtection({ ...protection, required_pull_request_reviews: { bypass_pull_request_allowances: { [kind]: [{ id: 1 }] } } }));
+  }
+  assert.throws(() => assertPullRequestProtection(undefined));
 });

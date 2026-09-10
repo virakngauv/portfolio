@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected } from './release-policy.mjs';
+import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection } from './release-policy.mjs';
 
 const repo = 'virakngauv/portfolio';
 const branch = 'codex-upstream-release';
@@ -32,6 +32,8 @@ const settings = api('graphql', { query: `query { repository(owner:"virakngauv",
 if (settings.errors) throw new Error(JSON.stringify(settings.errors));
 if (!settings.data.repository.autoMergeAllowed) throw new Error('Enable repository auto-merge first');
 assertProtected(settings.data.repository.branchProtectionRules.nodes.find((rule) => rule.pattern === 'main'));
+
+assertPullRequestProtection(api(`repos/${repo}/branches/main/protection`));
 
 const main = api(`repos/${repo}/git/ref/heads/main`).object.sha;
 const base = api(`repos/${repo}/git/commits/${main}`);

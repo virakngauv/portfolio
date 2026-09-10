@@ -30,6 +30,7 @@ jobs:
           private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
           owner: virakngauv
           repositories: portfolio
+          permission-administration: read
           permission-contents: write
           permission-pull-requests: write
           permission-issues: write

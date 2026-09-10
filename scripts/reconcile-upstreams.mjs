@@ -113,6 +113,8 @@ const pr = existing
   : api(`repos/${repo}/pulls`, { title: 'chore: release tested upstream revisions', head: branch, base: 'main', body });
 assertPinOnly(pages(`repos/${repo}/pulls/${pr.number}/files`), projects);
 if (pr.head.sha !== head) throw new Error('PR head changed before auto-merge request');
-const result = api('graphql', { query: `mutation($id:ID!) { enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:SQUASH}) { pullRequest { url } } }`, variables: { id: pr.node_id } });
-if (result.errors) throw new Error(JSON.stringify(result.errors));
+if (!pr.auto_merge) {
+  execFileSync('gh', ['pr', 'merge', String(pr.number), '--repo', repo, '--auto', '--squash',
+    '--match-head-commit', head, '--body', `Closes #${issueNumber}\n\n${attribution}`], { stdio: 'inherit' });
+}
 console.log(`Release PR: ${pr.html_url}`);

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from './release-policy.mjs';
+import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, retainedPins, autoMergeArgs } from './release-policy.mjs';
 
 const repo = 'virakngauv/portfolio';
 const branch = 'codex-upstream-release';
@@ -43,13 +43,8 @@ for (const project of projects) {
   if (pin?.mode !== '160000') throw new Error(`Missing gitlink: ${project.path}`);
   const sha = api(`repos/${project.repository}/commits/${project.branch}`).sha;
   if (sha === pin.sha) continue;
-  const runs = api(`repos/${project.repository}/actions/workflows/${project.workflow}/runs?event=push&branch=${project.branch}&head_sha=${sha}&per_page=1`).workflow_runs;
-  const run = runs[0];
+  const run = testedRun(project, sha);
   if (!run) continue;
-  // Unrelated jobs may still be running; verify the required jobs on this
-  // exact run attempt rather than relying on the overall conclusion.
-  const jobs = pages(`repos/${project.repository}/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, 'jobs');
-  if (!eligibleRun(run, jobs, project, sha)) continue;
   const comparison = api(`repos/${project.repository}/compare/${pin.sha}...${sha}`);
   if (comparison.status !== 'ahead') throw new Error(`Refusing non-forward pin update for ${project.repository}`);
   changes.push({ ...project, sha, previous: pin.sha, runUrl: run.html_url });
@@ -65,12 +60,17 @@ if (existing) {
   // Never rewrite a human edit on the automation branch.
   const commits = pages(`repos/${repo}/pulls/${existing.number}/commits`);
   if (commits.some((commit) => commit.author?.login !== process.env.PORTFOLIO_BOT_LOGIN)) throw new Error('Release branch contains another author');
-  // Keep the tested candidate intact if another project's current head is not ready.
-  // A later reconciliation can replace the whole batch without dropping a pin.
-  if (shouldDeferRelease(existingFiles, changes)) {
-    ensureAutoMerge(existing.number, existing.head.sha);
-    console.log('Deferring batch update to preserve existing tested release pins');
-    process.exit(0);
+  const candidateTree = api(`repos/${repo}/git/trees/${existing.head.sha}?recursive=1`);
+  if (candidateTree.truncated) throw new Error('Candidate tree was truncated');
+  for (const pin of retainedPins(existingFiles, candidateTree.tree, baseTree.tree, changes)) {
+    const project = projects.find((project) => project.path === pin.path);
+    const comparison = api(`repos/${project.repository}/compare/${pin.previous}...${pin.sha}`);
+    // Main may already include or supersede a previously proposed pin.
+    if (comparison.status === 'behind' || comparison.status === 'identical') continue;
+    if (comparison.status !== 'ahead') throw new Error('Retained pin diverged from main');
+    const run = testedRun(project, pin.sha);
+    if (!run) throw new Error('Retained pin no longer passes required upstream checks');
+    changes.push({ ...project, ...pin, runUrl: run.html_url });
   }
 }
 if (!changes.length) { console.log('No eligible pin updates'); process.exit(0); }
@@ -87,7 +87,8 @@ const tree = api(`repos/${repo}/git/trees`, {
 });
 const oldCommit = old ? api(`repos/${repo}/git/commits/${old}`) : null;
 let head = old;
-if (oldCommit?.tree.sha !== tree.sha || !existing) {
+const includesMain = old ? ['ahead', 'identical'].includes(api(`repos/${repo}/compare/${main}...${old}`).status) : false;
+if (oldCommit?.tree.sha !== tree.sha || !existing || !includesMain) {
   // Including both parents advances the release branch without force-pushing and
   // keeps it up to date with main. Its tree is rebuilt from main + validated pins.
   const commit = api(`repos/${repo}/git/commits`, {
@@ -124,4 +125,11 @@ function ensureAutoMerge(number, expectedHead) {
   const latest = api(`repos/${repo}/pulls/${number}`);
   const args = autoMergeArgs(latest, expectedHead, repo, attribution);
   if (args) execFileSync('gh', args, { stdio: 'inherit' });
+}
+
+function testedRun(project, sha) {
+  const run = api(`repos/${project.repository}/actions/workflows/${project.workflow}/runs?event=push&branch=${project.branch}&head_sha=${sha}&per_page=1`).workflow_runs[0];
+  if (!run) return null;
+  const jobs = pages(`repos/${project.repository}/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, 'jobs');
+  return eligibleRun(run, jobs, project, sha) ? run : null;
 }

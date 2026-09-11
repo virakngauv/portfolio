@@ -2,7 +2,10 @@ export function eligibleRun(run, jobs, project, sha) {
   return run?.event === 'push' && run.head_branch === project.branch && run.head_sha === sha
     && run.head_repository?.full_name === project.repository
     && project.requiredJobs.length > 0
-    && project.requiredJobs.every((name) => jobs.some((job) => job.name === name && job.conclusion === 'success'));
+    && project.requiredJobs.every((name) => {
+      const matching = jobs.filter((job) => job.name === name);
+      return matching.length > 0 && matching.every((job) => job.conclusion === 'success');
+    });
 }
 
 export function assertPinOnly(files, projects) {
@@ -28,8 +31,13 @@ export function assertPullRequestProtection(protection) {
   }
 }
 
-export function shouldDeferRelease(files, changes) {
-  return files.some((file) => !changes.some((change) => change.path === file.filename));
+export function retainedPins(files, candidateTree, baseTree, changes) {
+  return files.filter((file) => !changes.some((change) => change.path === file.filename)).flatMap((file) => {
+    const candidate = candidateTree.find((entry) => entry.path === file.filename);
+    const base = baseTree.find((entry) => entry.path === file.filename);
+    if (candidate?.mode !== '160000' || base?.mode !== '160000') throw new Error('Invalid retained gitlink');
+    return candidate.sha === base.sha ? [] : [{ path: file.filename, sha: candidate.sha, previous: base.sha }];
+  });
 }
 
 export function autoMergeArgs(pr, expectedHead, repo, attribution) {

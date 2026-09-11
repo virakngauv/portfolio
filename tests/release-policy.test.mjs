@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from '../scripts/release-policy.mjs';
+import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, retainedPins, autoMergeArgs } from '../scripts/release-policy.mjs';
 
 const project = { repository: 'owner/game', path: 'projects/game', branch: 'main', requiredJobs: ['Quality', 'End-to-end'] };
 const sha = 'a'.repeat(40);
@@ -42,17 +42,18 @@ test('release guard rejects missing PR protection, destructive updates, and bypa
   assert.throws(() => assertPullRequestProtection(undefined));
 });
 
-test('pending batch retains tested pins while another upstream head is ineligible', () => {
-  const files = [{ filename: 'projects/a' }, { filename: 'projects/b' }];
-  assert.equal(shouldDeferRelease(files, [{ path: 'projects/b' }]), true);
-  assert.equal(shouldDeferRelease(files, []), true);
-  assert.equal(shouldDeferRelease(files, [{ path: 'projects/a' }, { path: 'projects/b' }]), false);
-  assert.equal(shouldDeferRelease([], [{ path: 'projects/c' }]), false);
+test('stale candidate retains missing eligible replacements over current main', () => {
+  const files = [{ filename: 'projects/a' }];
+  const candidate = [{ path: 'projects/a', mode: '160000', sha: 'tested' }];
+  const main = [{ path: 'projects/a', mode: '160000', sha: 'old' }, { path: 'README.md', mode: '100644', sha: 'new-docs' }];
+  assert.deepEqual(retainedPins(files, candidate, main, []), [{ path: 'projects/a', sha: 'tested', previous: 'old' }]);
+  assert.deepEqual(retainedPins(files, candidate, main, [{ path: 'projects/a' }]), []);
+  assert.deepEqual(retainedPins(files, candidate, candidate, []), []);
+  assert.throws(() => retainedPins(files, [], main, []));
 });
 
 test('deferred candidate retries missing auto-merge on exactly its validated head', () => {
   const pr = { number: 7, state: 'open', head: { sha }, body: 'Closes #3', auto_merge: null };
-  assert.equal(shouldDeferRelease([{ filename: project.path }], []), true);
   const args = autoMergeArgs(pr, sha, 'owner/portfolio', 'App attribution');
   assert.equal(args[args.indexOf('--match-head-commit') + 1], sha);
   assert.ok(args.includes('--auto'));
@@ -60,4 +61,12 @@ test('deferred candidate retries missing auto-merge on exactly its validated hea
   assert.throws(() => autoMergeArgs({ ...pr, head: { sha: 'b'.repeat(40) } }, sha, '', ''));
   assert.throws(() => autoMergeArgs({ ...pr, state: 'closed' }, sha, '', ''));
   assert.throws(() => autoMergeArgs({ ...pr, body: '' }, sha, '', ''));
+});
+
+test('duplicate required job names cannot hide failed or unfinished jobs', () => {
+  const run = { event: 'push', head_branch: 'main', head_sha: sha, head_repository: { full_name: project.repository } };
+  const jobs = project.requiredJobs.map((name) => ({ name, conclusion: 'success' }));
+  for (const conclusion of ['failure', null, 'cancelled', 'skipped']) {
+    assert.equal(eligibleRun(run, [...jobs, { name: 'Quality', conclusion }], project, sha), false);
+  }
 });

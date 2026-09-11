@@ -46,8 +46,8 @@ for (const project of projects) {
   const runs = api(`repos/${project.repository}/actions/workflows/${project.workflow}/runs?event=push&branch=${project.branch}&head_sha=${sha}&per_page=1`).workflow_runs;
   const run = runs[0];
   if (!run) continue;
-  // The sender is part of this CI run, so its overall conclusion may still be null.
-  // Verify the required jobs on this exact run attempt instead.
+  // Unrelated jobs may still be running; verify the required jobs on this
+  // exact run attempt rather than relying on the overall conclusion.
   const jobs = pages(`repos/${project.repository}/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, 'jobs');
   if (!eligibleRun(run, jobs, project, sha)) continue;
   const comparison = api(`repos/${project.repository}/compare/${pin.sha}...${sha}`);

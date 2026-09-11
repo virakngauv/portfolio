@@ -1,0 +1,4 @@
+[
+  {"repository":"virakngauv/pic-match","path":"projects/pic-match","branch":"main","workflow":"ci.yml","requiredJobs":["Quality","End-to-end"]},
+  {"repository":"virakngauv/secret-hitman-5","path":"projects/secret-hitman-5","branch":"main","workflow":"ci.yml","requiredJobs":["Quality","End-to-end (chromium)","End-to-end (firefox)","End-to-end (webkit)"]}
+]

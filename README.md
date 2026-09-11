@@ -84,6 +84,101 @@ Both HTTP requests and WebSocket upgrades use the same exact-host and origin pol
 
 **Every deployment or restart can end rooms in both games.** Keep one instance. Independent child processes still share CPU, memory, restart impact and deployment timing.
 
+## Deployment lessons and troubleshooting
+
+For automatic releases after upstream merges, follow [automatic backend releases](docs/automatic-releases.md). The receiver batches validated gitlink updates into a tested PR; activate it only after credentials and required branch checks are configured. During initial manual setup, set `deploy_on_push: false`. After GitHub App credentials and required branch protections are configured, enable `deploy_on_push: true` in the live DigitalOcean App Spec as part of activation. The checked-in example uses the activated state; copying it does not update the live app.
+
+The September 9, 2026 validation passed all 21 offline tests, an ARM64 Docker image build, and both games' real-server smoke checks under a 512 MiB / one-CPU limit with swap disabled. Shutdown completed with exit 0 and no OOM. Container memory snapshots were 135.2 MiB after smoke testing and 142.6 MiB after manual use; these are snapshots, not peak measurements or capacity guarantees. The user also reported successful local multiplayer/reconnect checks and both deployed games working after correcting the origin allowlist. Sustained-load and maximum-player capacity remain unverified. This supplements the earlier initialization status in [the deployment runbook](docs/deployment.md).
+
+
+### Check for backend updates now
+
+After the receiver workflow is merged into `main` and `PORTFOLIO_RELEASES_ENABLED=true`, open [Actions](https://github.com/virakngauv/portfolio/actions) → **Reconcile upstream releases** → **Run workflow**, select **main**, then click **Run workflow** to confirm. This checks for newer backend commits with passing upstream CI and creates or updates a release PR. Required portfolio checks gate auto-merge; DigitalOcean deploys after merge. It does not bypass CI or guarantee an update when no eligible commits exist.
+
+The same check is scheduled once daily at **2:20 AM Pacific** (`America/Los_Angeles`), chosen once using Python's random-number generator. GitHub may delay scheduled runs; on the spring daylight-saving transition, the skipped 2:20 AM run advances to 3:00 AM. You can use **Run workflow** between scheduled checks.
+
+### Know which URL does what
+
+| Game | Local browser UI | Local backend | Production backend |
+| --- | --- | --- | --- |
+| Pic Match | `http://localhost:3000` | `http://pic-match.localhost:8080` | `https://game.pic-match.virakngauv.com` |
+| Secret Hitman | `http://localhost:3001` | `http://secret-hitman.localhost:8080` | `https://game.secrethitman.com` |
+
+The container runs the backends and gateway only. A backend's `/` can return `not_found` normally; use `/healthz` to check it, and open the separately hosted frontend to play. Frontend hosting must set `NEXT_PUBLIC_GAME_SERVER_URL` to the corresponding backend URL **and rebuild/redeploy**. Changing the variable alone does not update an existing frontend build.
+
+For local browser testing, start the backend container using [the runbook](docs/deployment.md#validate-the-container-first), then run these frontend commands in separate terminals from the repository root:
+
+```bash
+cd projects/pic-match
+pnpm install --frozen-lockfile
+NEXT_PUBLIC_GAME_SERVER_URL=http://pic-match.localhost:8080 pnpm dev:web --port 3000
+```
+
+```bash
+cd projects/secret-hitman-5
+pnpm install --frozen-lockfile
+NEXT_PUBLIC_GAME_SERVER_URL=http://secret-hitman.localhost:8080 pnpm dev:web --port 3001
+```
+
+### DigitalOcean and Cloudflare setup
+
+1. Create one App Platform web service from this repository's reviewed revision, with source directory `/`, `Dockerfile`, HTTP port 8080, one instance, and health path `/_runtime/healthz`. Leave the run-command override empty. Review the region and displayed cost; keep deploy-on-push disabled. Grant source access for the parent repository and its submodules.
+2. Apply the runtime environment and exact-host ingress rules from [`.do/app.example.yaml`](.do/app.example.yaml), adjusted to the actual frontend domains. Use `CLIENT_IP_MODE=digitalocean` behind App Platform. Keep internal child ports unexposed and preserve request paths. The example file is not automatically synchronized with a running app.
+3. In App Platform, open **Networking → Domains → Add domain**, add each backend hostname, and select **You manage your domain**. Keep Cloudflare nameservers. Copy the exact CNAME target DigitalOcean supplies for each domain.
+4. In Cloudflare **DNS → Records**, add the records below. Use **DNS only** (gray cloud) for this setup and TTL Auto. Enter only a target hostname, without `https://`, a port, or a path. Inspect any conflicting record at the same name before replacing it; preserve existing frontend and mail records.
+5. Wait for DigitalOcean domain validation and HTTPS issuance. If restrictive CAA records exist, they must permit both `letsencrypt.org` and `pki.goog`. Verify both backend `/healthz` URLs, then deploy the frontends with the matching HTTPS backend values and test real room connections.
+
+| Cloudflare zone | Type | Name | Target |
+| --- | --- | --- | --- |
+| `virakngauv.com` | CNAME | `game.pic-match` | Exact alias supplied by DigitalOcean |
+| `secrethitman.com` | CNAME | `game` | Exact alias supplied by DigitalOcean |
+
+DigitalOcean builds the image from Git; local Docker is only needed to reproduce container tests. Buildpacks also produce containers, so switching to buildpacks alone does not remove container runtime overhead. On macOS, Docker CLI needs a local engine in a Linux VM or a remote engine; Docker Desktop bundles the local pieces. The Mac VM's memory is separate from the deployed service's memory limit.
+
+Provider references: [create an app](https://docs.digitalocean.com/products/app-platform/how-to/create-apps/), [edit the effective App Spec](https://docs.digitalocean.com/products/app-platform/how-to/update-app-spec/), [domains and certificates](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/), [Cloudflare nameservers](https://developers.cloudflare.com/registrar/faq/), [DNS proxy status](https://developers.cloudflare.com/dns/proxy-status/), [buildpacks](https://docs.digitalocean.com/products/app-platform/reference/buildpacks/), and [Docker Desktop's VM](https://docs.docker.com/desktop/features/networking/).
+
+### “Connecting to the game server…” with a healthy backend
+
+Check the **actual frontend origin in the browser address bar**, including redirects. `https://secrethitman.com` and `https://www.secrethitman.com` are different origins. Our deployed backend returned 200 for the first origin and 403 for the second, while DNS and `/healthz` were working correctly. The fix was to allow both intended frontend origins in DigitalOcean:
+
+```dotenv
+SECRET_HITMAN_ALLOWED_ORIGINS=https://secrethitman.com,https://www.secrethitman.com
+```
+
+Save and deploy the backend configuration, then refresh the frontend. This fix needs neither a DNS change nor a frontend rebuild. The checked-in App Spec example now includes both origins. Preview frontend domains also need explicit permission; setting a frontend variable for “All Environments” does not authorize preview origins on the backend.
+
+Use these diagnostics, replacing the hostname and Origin when testing another game:
+
+```bash
+dig +short game.secrethitman.com
+curl -i https://game.secrethitman.com/healthz
+curl -i -H 'Origin: https://www.secrethitman.com' \
+  'https://game.secrethitman.com/socket.io/?EIO=4&transport=polling'
+```
+
+The last command opens a short-lived Engine.IO polling session; expect HTTP 200 and an opening packet containing a session ID. It does not verify gameplay or WebSocket upgrade by itself.
+
+| Result | Next check |
+| --- | --- |
+| DNS lookup fails | Cloudflare record name/target and propagation |
+| TLS certificate error | DigitalOcean domain validation, DNS, and any CAA restrictions |
+| Backend `/` returns `not_found` | Use `/healthz`; `/` is not a frontend page |
+| HTTP 403 for the browser Origin | Exact per-game allowed origins, including `www` |
+| HTTP 421 | Backend hostname in gateway configuration and App Platform ingress |
+| Health succeeds but UI still cannot connect | Frontend's built backend URL, browser Network errors, origin test, and backend logs |
+
+## Adding a project to the portfolio
+
+Use this checklist for each new repository. Static sites and frontends can be hosted as separate components without joining the game runtime. A new backend in this shared container currently requires explicit integration work; adding a submodule alone does not register a server.
+
+1. **Record the deployment contract.** Identify the upstream repository and reviewed commit, server start command, health endpoint, protocol/smoke scenario, required runtime variables, frontend host, backend host, exact allowed origins, and unique local frontend/backend ports. Confirm whether its state model fits one shared instance and coordinated restarts.
+2. **Prepare upstream first.** Read that repository's root `AGENTS.md`. Make any application changes there and get the revision reviewed before pinning it here. For a backend, verify loopback binding, explicit origins, trusted-proxy behavior, and graceful shutdown. Keep application logic upstream.
+3. **Track and pin the integration.** Create a tracking issue before publishing the implementation PR. Add an HTTPS submodule under `projects/<id>` at the reviewed commit, and ensure DigitalOcean can fetch it. Do not copy application source or use floating branch tips in builds.
+4. **Register the backend explicitly.** Update the project list in `runtime/config.mjs`, including the distinct-port validation (currently hardcoded for three total ports). Update `scripts/install-games.mjs`, the smoke runner/protocol adapter as needed, and configuration tests. Check the server-entry-point and child-environment contract; arbitrary parent environment variables are intentionally not inherited. The Dockerfile copies `projects/`, but installation still uses an explicit project list.
+5. **Wire local and production configuration.** Add the new prefix's hosts/origins/port settings to `.env.example`; add runtime variables, the domain, and an exact-host ingress rule to `.do/app.example.yaml`. Document the new URL mapping above. Add its Cloudflare CNAME and rebuild the separately hosted frontend with its backend URL.
+6. **Validate before release.** Run syntax checks, offline tests, the full real-server container smoke suite under the shared memory limit, and two independent browser sessions. Exercise the new project alongside existing games, reconnects, allowed/rejected origins, and shutdown. Re-measure total container memory after each addition; today's headroom is not a reservation for future projects.
+7. **Release the complete configuration.** Include `Closes #<issue>` in the implementation PR. Record the parent commit, gitlinks, effective App Spec/environment, and compatible frontend versions. Apply the reviewed spec to DigitalOcean, verify HTTPS/health and browser connections, and retain a known-good deployment for rollback. Keep one instance while state remains in memory.
+
 ## Development and releases
 
 Continue normal development in the original project repos. A push to either upstream repo does **not** advance this repo's submodule pin. To release a reviewed upstream commit, make a portfolio branch and update only that gitlink:

@@ -1,0 +1,41 @@
+name: Reconcile upstream releases
+on:
+  workflow_dispatch:
+  schedule:
+    # Selected once with Python secrets.randbelow(300): 02:20 Pacific.
+    - cron: '20 2 * * *'
+      timezone: America/Los_Angeles
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-release-reconciliation
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    if: vars.PORTFOLIO_RELEASES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        id: app
+        with:
+          app-id: ${{ vars.PORTFOLIO_APP_ID }}
+          private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
+          owner: virakngauv
+          repositories: portfolio
+          permission-administration: read
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Reconcile tested upstream revisions
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          PORTFOLIO_BOT_LOGIN: ${{ steps.app.outputs.app-slug }}[bot]
+        run: node scripts/reconcile-upstreams.mjs

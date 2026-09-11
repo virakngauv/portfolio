@@ -6,7 +6,8 @@ services:
     github:
       repo: virakngauv/portfolio
       branch: main
-      deploy_on_push: false
+      # Enable only after required PR checks and release automation are configured.
+      deploy_on_push: true
     source_dir: /
     dockerfile_path: Dockerfile
     instance_count: 1
@@ -33,7 +34,7 @@ services:
         value: https://pic-match.virakngauv.com
         scope: RUN_TIME
       - key: SECRET_HITMAN_ALLOWED_ORIGINS
-        value: https://secrethitman.com
+        value: https://secrethitman.com,https://www.secrethitman.com
         scope: RUN_TIME
       - key: CLIENT_IP_MODE
         value: digitalocean

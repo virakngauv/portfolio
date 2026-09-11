@@ -44,7 +44,7 @@ Expected clean shutdown: exit 0 and `oom=false`. A startup failure, health-check
 
 ## App Platform setup
 
-Use `.do/app.example.yaml` as an **example to review and import manually**, not an auto-deployment manifest. It intentionally has `deploy_on_push: false`.
+Use `.do/app.example.yaml` as an **example to review and import manually**. It now has `deploy_on_push: true` for the protected automatic-release flow. Keep this false in the live app until the credentials and branch checks in [automatic releases](automatic-releases.md) are configured; do not enable it on an unprotected branch.
 
 1. Authorize DigitalOcean's GitHub integration to read `portfolio`, `pic-match` and `secret-hitman-5`. Submodules use HTTPS and are in the same account, as required by [App Platform's source-repository documentation](https://docs.digitalocean.com/products/app-platform/how-to/manage-source-repo/). A private future submodule also requires explicit access; never embed credentials in `.gitmodules`.
 2. Verify the desired region, source branch, Dockerfile, instance size/count, health checks, domains and origin lists. Import only after accepting the displayed cost. App Platform builds from the parent checkout and its pinned submodules. Changing a spec file in Git alone does not update an existing App's settings.
@@ -57,7 +57,7 @@ See the [App specification reference](https://docs.digitalocean.com/products/app
 
 ## Release and rollback
 
-A release is the parent commit plus its two gitlinks, the effective App spec/environment, and compatible frontend versions. Record all of them. With auto-deploy disabled, merge a tested pin-update PR, then explicitly deploy the approved revision from App Platform. Recheck the selected revision before starting the deployment.
+A release is the parent commit plus its gitlinks, the effective App spec/environment, and compatible frontend versions. Record all of them. With auto-deploy disabled, merge a tested pin-update PR, then explicitly deploy the approved revision from App Platform. With [automatic releases](automatic-releases.md) activated, a validated pin-update PR merges after required checks and triggers deployment. Recheck the selected revision and deployment outcome in App Platform.
 
 Rollback either selects a known-good previous deployment in App Platform or reverts the relevant parent commit in a new reviewed PR, restoring its gitlinks. For a local rollback checkout, always run `git submodule update --init --recursive` and reinstall the pinned dependencies. Rebuild/redeploy the matching frontend if its protocol changed. Rollback also ends active rooms; room memory is not restored.
 

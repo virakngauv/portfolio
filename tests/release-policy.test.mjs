@@ -1,15 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from '../scripts/release-policy.mjs';
+import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from '../scripts/release-policy.mjs';
 
 const project = { repository: 'owner/game', path: 'projects/game', branch: 'main', requiredJobs: ['Quality', 'End-to-end'] };
 const sha = 'a'.repeat(40);
-test('dispatch rejects unknown repositories and shell-like SHA payloads', () => {
-  validateDispatch({ repository: project.repository, sha }, [project]);
-  for (const payload of [null, { repository: 'evil/game', sha }, { repository: project.repository, sha: '$(id)' }]) {
-    assert.throws(() => validateDispatch(payload, [project]));
-  }
-});
 test('only exact main push revisions with every required job successful qualify', () => {
   const run = { event: 'push', head_branch: 'main', head_sha: sha, head_repository: { full_name: project.repository } };
   const jobs = project.requiredJobs.map((name) => ({ name, conclusion: 'success' }));

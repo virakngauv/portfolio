@@ -1,13 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { validateDispatch, eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from './release-policy.mjs';
+import { eligibleRun, assertPinOnly, assertProtected, assertPullRequestProtection, shouldDeferRelease, autoMergeArgs } from './release-policy.mjs';
 
 const repo = 'virakngauv/portfolio';
 const branch = 'codex-upstream-release';
 const attribution = 'Automated by the portfolio release GitHub App on behalf of @virakngauv (workflow implemented by Codex).';
 const projects = JSON.parse(readFileSync('.github/portfolio-projects.json', 'utf8'));
-const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
-if (process.env.GITHUB_EVENT_NAME === 'repository_dispatch') validateDispatch(event.client_payload, projects);
 
 function api(path, body, method = body ? 'POST' : 'GET') {
   const args = ['api', '--method', method, path];
@@ -45,10 +43,6 @@ for (const project of projects) {
   if (pin?.mode !== '160000') throw new Error(`Missing gitlink: ${project.path}`);
   const sha = api(`repos/${project.repository}/commits/${project.branch}`).sha;
   if (sha === pin.sha) continue;
-  if (process.env.GITHUB_EVENT_NAME === 'repository_dispatch'
-      && event.client_payload.repository === project.repository && event.client_payload.sha !== sha) {
-    console.log(`Ignoring stale dispatch SHA for ${project.repository}; reconciling current head`);
-  }
   const runs = api(`repos/${project.repository}/actions/workflows/${project.workflow}/runs?event=push&branch=${project.branch}&head_sha=${sha}&per_page=1`).workflow_runs;
   const run = runs[0];
   if (!run) continue;

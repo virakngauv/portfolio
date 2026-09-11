@@ -1,8 +1,3 @@
-export function validateDispatch(payload, projects) {
-  if (!payload || !projects.some((p) => p.repository === payload.repository)
-      || !/^[a-f0-9]{40}$/.test(payload.sha ?? '')) throw new Error('Invalid upstream dispatch');
-}
-
 export function eligibleRun(run, jobs, project, sha) {
   return run?.event === 'push' && run.head_branch === project.branch && run.head_sha === sha
     && run.head_repository?.full_name === project.repository

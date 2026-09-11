@@ -90,6 +90,13 @@ For automatic releases after upstream merges, follow [automatic backend releases
 
 The September 9, 2026 validation passed all 21 offline tests, an ARM64 Docker image build, and both games' real-server smoke checks under a 512 MiB / one-CPU limit with swap disabled. Shutdown completed with exit 0 and no OOM. Container memory snapshots were 135.2 MiB after smoke testing and 142.6 MiB after manual use; these are snapshots, not peak measurements or capacity guarantees. The user also reported successful local multiplayer/reconnect checks and both deployed games working after correcting the origin allowlist. Sustained-load and maximum-player capacity remain unverified. This supplements the earlier initialization status in [the deployment runbook](docs/deployment.md).
 
+
+### Check for backend updates now
+
+After the receiver workflow is merged into `main` and `PORTFOLIO_RELEASES_ENABLED=true`, open [Actions](https://github.com/virakngauv/portfolio/actions) → **Reconcile upstream releases** → **Run workflow**, select **main**, then click **Run workflow** to confirm. This checks for newer backend commits with passing upstream CI and creates or updates a release PR. Required portfolio checks gate auto-merge; DigitalOcean deploys after merge. It does not bypass CI or guarantee an update when no eligible commits exist.
+
+The same check is scheduled once daily at **2:20 AM Pacific** (`America/Los_Angeles`), chosen once using Python's random-number generator. GitHub may delay scheduled runs; on the spring daylight-saving transition, the skipped 2:20 AM run advances to 3:00 AM. You can use **Run workflow** between scheduled checks.
+
 ### Know which URL does what
 
 | Game | Local browser UI | Local backend | Production backend |

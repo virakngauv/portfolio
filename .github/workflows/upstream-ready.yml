@@ -1,10 +1,10 @@
 name: Reconcile upstream releases
 on:
-  repository_dispatch:
-    types: [upstream-ready]
   workflow_dispatch:
   schedule:
-    - cron: '17,47 * * * *'
+    # Selected once with Python secrets.randbelow(300): 02:20 Pacific.
+    - cron: '20 2 * * *'
+      timezone: America/Los_Angeles
 permissions:
   contents: read
 concurrency:

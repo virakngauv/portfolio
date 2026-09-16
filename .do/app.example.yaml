@@ -1,6 +1,18 @@
 # Import explicitly after validating the image, domains, origins and budget.
 name: portfolio-games
 region: nyc
+static_sites:
+  - name: portfolio-site
+    environment_slug: node-js
+    github:
+      repo: virakngauv/portfolio
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: pnpm install --frozen-lockfile && pnpm build
+    output_dir: dist
+    index_document: index.html
+    error_document: 404.html
 services:
   - name: games
     github:
@@ -43,15 +55,25 @@ services:
         value: info
         scope: RUN_TIME
       - key: SHUTDOWN_TIMEOUT_MS
-        value: '8000'
+        value: "8000"
         scope: RUN_TIME
 domains:
-  - domain: game.pic-match.virakngauv.com
+  - domain: virakngauv.com
     type: PRIMARY
+  - domain: game.pic-match.virakngauv.com
+    type: ALIAS
   - domain: game.secrethitman.com
     type: ALIAS
 ingress:
   rules:
+    - match:
+        authority:
+          exact: virakngauv.com
+        path:
+          prefix: /
+      component:
+        name: portfolio-site
+        preserve_path_prefix: true
     - match:
         authority:
           exact: game.pic-match.virakngauv.com

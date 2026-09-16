@@ -1,6 +1,6 @@
 # Portfolio deployment foundation
 
-This repository assembles **Pic Match and Secret Hitman 5's existing game servers** into one DigitalOcean App Platform service. It is deployment glue, not a migration of either product into a monorepo. The personal portfolio UI and static-site components are follow-up work.
+This repository hosts Virak Ngauv's static portfolio and assembles **Pic Match and Secret Hitman 5's existing game servers** into one DigitalOcean App Platform app. It is deployment glue, not a migration of either product into a monorepo.
 
 ```text
 Pic Match web (separately hosted)       Secret Hitman web (separately hosted)
@@ -19,15 +19,48 @@ game.pic-match.virakngauv.com             game.secrethitman.com
 
 ## What is here
 
-| Path | Purpose |
-| --- | --- |
-| `projects/pic-match`, `projects/secret-hitman-5` | HTTPS Git submodules pinned to specific commits, not copied source |
-| `runtime/` | Dependency-free Node gateway, configuration validation and child-process supervision |
-| `Dockerfile` | Installs upstream production dependencies; runs both servers as a non-root user |
-| `.do/app.example.yaml` | Explicit, opt-in App Platform configuration for one 512 MiB service |
-| `tests/` | Offline HTTP/tunnel/configuration/lifecycle tests using fixture processes |
-| `scripts/smoke*.mjs` | Real-server Socket.IO transport/create/join/resume checks |
-| `docs/deployment.md` | Domains, release/rollback, budget and memory-validation runbook |
+| Path                                             | Purpose                                                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `site/`                                          | Dependency-free static portfolio, including its custom 404 page                      |
+| `projects/pic-match`, `projects/secret-hitman-5` | HTTPS Git submodules pinned to specific commits, not copied source                   |
+| `runtime/`                                       | Dependency-free Node gateway, configuration validation and child-process supervision |
+| `Dockerfile`                                     | Installs upstream production dependencies; runs both servers as a non-root user      |
+| `.do/app.example.yaml`                           | Explicit, opt-in App Platform configuration for one 512 MiB service                  |
+| `tests/`                                         | Offline HTTP/tunnel/configuration/lifecycle tests using fixture processes            |
+| `scripts/smoke*.mjs`                             | Real-server Socket.IO transport/create/join/resume checks                            |
+| `docs/deployment.md`                             | Domains, release/rollback, budget and memory-validation runbook                      |
+
+## Portfolio site
+
+The portfolio is semantic HTML and CSS by design: it has no client runtime, application framework or third-party page assets. Install the development tools and preview it locally from the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Then open `http://127.0.0.1:4173`. Set `SITE_PORT` in `.env.local` to use a different loopback port. Local development stays on loopback by default; use `DEV_LAN=true pnpm dev` (or set it in `.env.local` and restart) only when you intentionally want to preview the static site from another device on a trusted LAN. The command prints every usable URL. This flag does not change the game runtime or production security policy.
+
+`pnpm build` recreates the deployable `dist/` directory from `site/`. The example App Platform spec installs with the frozen lockfile, runs that build, and publishes `dist/` as a separate static component at `virakngauv.com`; applying the example or changing DNS remains an explicit deployment step.
+
+### Development commands
+
+| Command                             | Purpose                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `pnpm dev`                          | Preview the portfolio source on loopback                      |
+| `DEV_LAN=true pnpm dev`             | Preview the static site on a trusted LAN                      |
+| `pnpm build`                        | Recreate the production `dist/` output                        |
+| `pnpm start` / `pnpm runtime:start` | Run the shared game-server runtime                            |
+| `pnpm format` / `pnpm format:check` | Write or verify Prettier formatting                           |
+| `pnpm lint`                         | Run ESLint over repository JavaScript                         |
+| `pnpm typecheck`                    | Run syntax checks for the dependency-free JavaScript runtime  |
+| `pnpm test` / `pnpm test:watch`     | Run or watch the Node test suite                              |
+| `pnpm test:e2e`                     | Build and test the portfolio in Chromium, Firefox and WebKit  |
+| `pnpm check`                        | Run formatting, lint, syntax, Node tests and production build |
+
+Playwright uses its own loopback server on port 4194 and tears it down after the run. Set `PLAYWRIGHT_PORT` to choose another isolated port, `PW_REUSE_SERVER=1` to reuse that exact local server while debugging, or `PLAYWRIGHT_BASE_URL` to test an explicitly chosen deployment. CI keeps reuse disabled. The static portfolio has no persistent data, so there is nothing to back up; the repository and a previous App Platform deployment are its rollback sources.
+
+The project intentionally does not use React, Next.js, Tailwind, TypeScript or a client-side state library: the current page has no stateful application behavior that warrants them. Node's built-in test runner covers server and artifact behavior; Playwright covers the rendered site. Revisit that choice if the portfolio gains interactive application flows rather than adding a framework solely for convention.
 
 Initial source pins are Pic Match `39e7dee11f4ef022aae43d8cf6b8941973d2d392` and Secret Hitman `338dae7cf549bfd89b35ea7db6fc607e0b1e2e76`. Gitlinks in the commit are the source of truth for subsequent releases.
 
@@ -90,7 +123,6 @@ For automatic releases after upstream merges, follow [automatic backend releases
 
 The September 9, 2026 validation passed all 21 offline tests, an ARM64 Docker image build, and both games' real-server smoke checks under a 512 MiB / one-CPU limit with swap disabled. Shutdown completed with exit 0 and no OOM. Container memory snapshots were 135.2 MiB after smoke testing and 142.6 MiB after manual use; these are snapshots, not peak measurements or capacity guarantees. The user also reported successful local multiplayer/reconnect checks and both deployed games working after correcting the origin allowlist. Sustained-load and maximum-player capacity remain unverified. This supplements the earlier initialization status in [the deployment runbook](docs/deployment.md).
 
-
 ### Check for backend updates now
 
 After the receiver workflow is merged into `main` and `PORTFOLIO_RELEASES_ENABLED=true`, open [Actions](https://github.com/virakngauv/portfolio/actions) → **Reconcile upstream releases** → **Run workflow**, select **main**, then click **Run workflow** to confirm. This checks for newer backend commits with passing upstream CI and creates or updates a release PR. Required portfolio checks gate auto-merge; DigitalOcean deploys after merge. It does not bypass CI or guarantee an update when no eligible commits exist.
@@ -99,10 +131,10 @@ The same check is scheduled once daily at **2:20 AM Pacific** (`America/Los_Ange
 
 ### Know which URL does what
 
-| Game | Local browser UI | Local backend | Production backend |
-| --- | --- | --- | --- |
-| Pic Match | `http://localhost:3000` | `http://pic-match.localhost:8080` | `https://game.pic-match.virakngauv.com` |
-| Secret Hitman | `http://localhost:3001` | `http://secret-hitman.localhost:8080` | `https://game.secrethitman.com` |
+| Game          | Local browser UI        | Local backend                         | Production backend                      |
+| ------------- | ----------------------- | ------------------------------------- | --------------------------------------- |
+| Pic Match     | `http://localhost:3000` | `http://pic-match.localhost:8080`     | `https://game.pic-match.virakngauv.com` |
+| Secret Hitman | `http://localhost:3001` | `http://secret-hitman.localhost:8080` | `https://game.secrethitman.com`         |
 
 The container runs the backends and gateway only. A backend's `/` can return `not_found` normally; use `/healthz` to check it, and open the separately hosted frontend to play. Frontend hosting must set `NEXT_PUBLIC_GAME_SERVER_URL` to the corresponding backend URL **and rebuild/redeploy**. Changing the variable alone does not update an existing frontend build.
 
@@ -128,10 +160,10 @@ NEXT_PUBLIC_GAME_SERVER_URL=http://secret-hitman.localhost:8080 pnpm dev:web --p
 4. In Cloudflare **DNS → Records**, add the records below. Use **DNS only** (gray cloud) for this setup and TTL Auto. Enter only a target hostname, without `https://`, a port, or a path. Inspect any conflicting record at the same name before replacing it; preserve existing frontend and mail records.
 5. Wait for DigitalOcean domain validation and HTTPS issuance. If restrictive CAA records exist, they must permit both `letsencrypt.org` and `pki.goog`. Verify both backend `/healthz` URLs, then deploy the frontends with the matching HTTPS backend values and test real room connections.
 
-| Cloudflare zone | Type | Name | Target |
-| --- | --- | --- | --- |
-| `virakngauv.com` | CNAME | `game.pic-match` | Exact alias supplied by DigitalOcean |
-| `secrethitman.com` | CNAME | `game` | Exact alias supplied by DigitalOcean |
+| Cloudflare zone    | Type  | Name             | Target                               |
+| ------------------ | ----- | ---------------- | ------------------------------------ |
+| `virakngauv.com`   | CNAME | `game.pic-match` | Exact alias supplied by DigitalOcean |
+| `secrethitman.com` | CNAME | `game`           | Exact alias supplied by DigitalOcean |
 
 DigitalOcean builds the image from Git; local Docker is only needed to reproduce container tests. Buildpacks also produce containers, so switching to buildpacks alone does not remove container runtime overhead. On macOS, Docker CLI needs a local engine in a Linux VM or a remote engine; Docker Desktop bundles the local pieces. The Mac VM's memory is separate from the deployed service's memory limit.
 
@@ -158,13 +190,13 @@ curl -i -H 'Origin: https://www.secrethitman.com' \
 
 The last command opens a short-lived Engine.IO polling session; expect HTTP 200 and an opening packet containing a session ID. It does not verify gameplay or WebSocket upgrade by itself.
 
-| Result | Next check |
-| --- | --- |
-| DNS lookup fails | Cloudflare record name/target and propagation |
-| TLS certificate error | DigitalOcean domain validation, DNS, and any CAA restrictions |
-| Backend `/` returns `not_found` | Use `/healthz`; `/` is not a frontend page |
-| HTTP 403 for the browser Origin | Exact per-game allowed origins, including `www` |
-| HTTP 421 | Backend hostname in gateway configuration and App Platform ingress |
+| Result                                      | Next check                                                                          |
+| ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| DNS lookup fails                            | Cloudflare record name/target and propagation                                       |
+| TLS certificate error                       | DigitalOcean domain validation, DNS, and any CAA restrictions                       |
+| Backend `/` returns `not_found`             | Use `/healthz`; `/` is not a frontend page                                          |
+| HTTP 403 for the browser Origin             | Exact per-game allowed origins, including `www`                                     |
+| HTTP 421                                    | Backend hostname in gateway configuration and App Platform ingress                  |
 | Health succeeds but UI still cannot connect | Frontend's built backend URL, browser Network errors, origin test, and backend logs |
 
 ## Adding a project to the portfolio

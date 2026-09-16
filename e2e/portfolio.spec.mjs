@@ -63,6 +63,14 @@ test("project cards follow the active responsive layout", async ({ page }) => {
   expect(second).not.toBeNull();
 
   const width = page.viewportSize()?.width ?? 0;
-  if (width <= 580) expect(second.y).toBeGreaterThan(first.y + first.height);
-  else expect(Math.abs(second.y - first.y)).toBeLessThan(2);
+  if (width <= 580) {
+    expect(second.y).toBeGreaterThan(first.y + first.height);
+    for (const name of ["Work", "About"]) {
+      const link = page.getByRole("link", { name, exact: true });
+      await expect(link).toBeVisible();
+      await link.focus();
+      await expect(link).toBeFocused();
+      await expect(link).toHaveCSS("outline-style", "solid");
+    }
+  } else expect(Math.abs(second.y - first.y)).toBeLessThan(2);
 });

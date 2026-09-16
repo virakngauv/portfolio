@@ -792,8 +792,7 @@ footer {
     min-height: 76px;
   }
 
-  .wordmark__name,
-  nav a:not(.nav-cta) {
+  .wordmark__name {
     position: absolute;
     width: 1px;
     height: 1px;

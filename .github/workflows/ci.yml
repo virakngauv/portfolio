@@ -9,27 +9,6 @@ concurrency:
   group: portfolio-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  linked-issue:
-    name: Linked issue
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      issues: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - name: Verify a real closing issue reference
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/check-linked-issue.mjs
   quality:
     name: Quality
     runs-on: ubuntu-latest

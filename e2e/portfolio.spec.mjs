@@ -44,9 +44,13 @@ test("keyboard users can reveal and use the skip link", async ({
 test("custom not-found page returns a real 404 with a recovery action", async ({
   page,
 }) => {
-  const response = await page.goto("/missing-page");
+  const response = await page.goto("/nested/missing-page/");
 
   expect(response?.status()).toBe(404);
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveAttribute(
+    "href",
+    "/styles.css",
+  );
   await expect(
     page.getByRole("heading", { name: "This page wandered off." }),
   ).toBeVisible();

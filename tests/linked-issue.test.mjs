@@ -7,6 +7,13 @@ import {
   closingIssueNumbers,
 } from "../scripts/check-linked-issue.mjs";
 
+function pullRequestEvent(body, base = "main") {
+  return {
+    pull_request: { base: { ref: base }, body },
+    repository: { default_branch: "main" },
+  };
+}
+
 test("closing issue references use GitHub closing keywords", () => {
   assert.deepEqual(
     closingIssueNumbers("Closes #7\nFixes #12 and resolves #7"),
@@ -38,7 +45,7 @@ test("linked issue policy runs trusted base code", () => {
 test("linked issue check rejects missing references and pull-request references", async () => {
   await assert.rejects(
     checkLinkedIssue({
-      event: { pull_request: { body: "No closing link" } },
+      event: pullRequestEvent("No closing link"),
       repository: "o/r",
       token: "x",
     }),
@@ -47,7 +54,7 @@ test("linked issue check rejects missing references and pull-request references"
 
   await assert.rejects(
     checkLinkedIssue({
-      event: { pull_request: { body: "Closes #7" } },
+      event: pullRequestEvent("Closes #7"),
       repository: "o/r",
       token: "x",
       fetchImpl: async () => ({
@@ -56,6 +63,17 @@ test("linked issue check rejects missing references and pull-request references"
       }),
     }),
     /pull request/,
+  );
+});
+
+test("linked issue check requires the repository default branch", async () => {
+  await assert.rejects(
+    checkLinkedIssue({
+      event: pullRequestEvent("Closes #7", "release"),
+      repository: "o/r",
+      token: "x",
+    }),
+    /default branch/,
   );
 });
 

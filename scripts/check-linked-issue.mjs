@@ -18,6 +18,13 @@ export async function checkLinkedIssue({
   token,
   fetchImpl = fetch,
 }) {
+  const defaultBranch = event.repository?.default_branch;
+  const baseBranch = event.pull_request?.base?.ref;
+  if (!defaultBranch || baseBranch !== defaultBranch)
+    throw new Error(
+      "Closing issue references require a pull request targeting the default branch.",
+    );
+
   const numbers = closingIssueNumbers(event.pull_request?.body ?? "");
   if (numbers.length === 0)
     throw new Error(

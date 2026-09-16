@@ -1,7 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim() || undefined;
-const port = Number.parseInt(process.env.PLAYWRIGHT_PORT ?? "4194", 10);
+
+export function playwrightPort(value) {
+  const candidate = value?.trim();
+  if (!candidate) return 4194;
+  if (!/^\d+$/.test(candidate))
+    throw new Error("PLAYWRIGHT_PORT must be an integer from 1 to 65535.");
+
+  const port = Number(candidate);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535)
+    throw new Error("PLAYWRIGHT_PORT must be an integer from 1 to 65535.");
+  return port;
+}
+
+const port = playwrightPort(process.env.PLAYWRIGHT_PORT);
 
 export default defineConfig({
   testDir: "./e2e",

@@ -35,6 +35,7 @@ export async function checkLinkedIssue({
     const response = await fetchImpl(
       `https://api.github.com/repos/${repository}/issues/${number}`,
       {
+        signal: AbortSignal.timeout(15_000),
         headers: {
           Accept: "application/vnd.github+json",
           Authorization: `Bearer ${token}`,

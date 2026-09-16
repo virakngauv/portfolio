@@ -21,4 +21,24 @@ test("blank Playwright base URLs use the managed loopback server", async () => {
   }
 });
 
+test("external Playwright servers do not depend on the local port", async () => {
+  const previousBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+  const previousPort = process.env.PLAYWRIGHT_PORT;
+  process.env.PLAYWRIGHT_BASE_URL = " https://portfolio.example/test/ ";
+  process.env.PLAYWRIGHT_PORT = "invalid";
+
+  try {
+    const { default: config } = await import(
+      `../playwright.config.mjs?external-base-url=${Date.now()}`
+    );
+    assert.equal(config.use.baseURL, "https://portfolio.example/test/");
+    assert.equal(config.webServer, undefined);
+  } finally {
+    if (previousBaseUrl === undefined) delete process.env.PLAYWRIGHT_BASE_URL;
+    else process.env.PLAYWRIGHT_BASE_URL = previousBaseUrl;
+    if (previousPort === undefined) delete process.env.PLAYWRIGHT_PORT;
+    else process.env.PLAYWRIGHT_PORT = previousPort;
+  }
+});
+
 // Posted by ChatGPT Chat on behalf of @virakngauv.

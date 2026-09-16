@@ -14,7 +14,9 @@ export function playwrightPort(value) {
   return port;
 }
 
-const port = playwrightPort(process.env.PLAYWRIGHT_PORT);
+const port = externalBaseUrl
+  ? undefined
+  : playwrightPort(process.env.PLAYWRIGHT_PORT);
 
 export default defineConfig({
   testDir: "./e2e",

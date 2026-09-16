@@ -57,10 +57,13 @@ test("linked issue check rejects missing references and pull-request references"
       event: pullRequestEvent("Closes #7"),
       repository: "o/r",
       token: "x",
-      fetchImpl: async () => ({
-        ok: true,
-        json: async () => ({ pull_request: {} }),
-      }),
+      fetchImpl: async (_url, options) => {
+        assert.ok(options.signal instanceof AbortSignal);
+        return {
+          ok: true,
+          json: async () => ({ pull_request: {} }),
+        };
+      },
     }),
     /pull request/,
   );

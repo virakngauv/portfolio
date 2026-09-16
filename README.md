@@ -160,10 +160,11 @@ NEXT_PUBLIC_GAME_SERVER_URL=http://secret-hitman.localhost:8080 pnpm dev:web --p
 4. In Cloudflare **DNS → Records**, add the records below. Use **DNS only** (gray cloud) for this setup and TTL Auto. Enter only a target hostname, without `https://`, a port, or a path. Inspect any conflicting record at the same name before replacing it; preserve existing frontend and mail records.
 5. Wait for DigitalOcean domain validation and HTTPS issuance. If restrictive CAA records exist, they must permit both `letsencrypt.org` and `pki.goog`. Verify both backend `/healthz` URLs, then deploy the frontends with the matching HTTPS backend values and test real room connections.
 
-| Cloudflare zone    | Type  | Name             | Target                               |
-| ------------------ | ----- | ---------------- | ------------------------------------ |
-| `virakngauv.com`   | CNAME | `game.pic-match` | Exact alias supplied by DigitalOcean |
-| `secrethitman.com` | CNAME | `game`           | Exact alias supplied by DigitalOcean |
+| Cloudflare zone    | Type                     | Name             | Target                                |
+| ------------------ | ------------------------ | ---------------- | ------------------------------------- |
+| `virakngauv.com`   | Supplied by DigitalOcean | `@`              | Exact target supplied by DigitalOcean |
+| `virakngauv.com`   | CNAME                    | `game.pic-match` | Exact alias supplied by DigitalOcean  |
+| `secrethitman.com` | CNAME                    | `game`           | Exact alias supplied by DigitalOcean  |
 
 DigitalOcean builds the image from Git; local Docker is only needed to reproduce container tests. Buildpacks also produce containers, so switching to buildpacks alone does not remove container runtime overhead. On macOS, Docker CLI needs a local engine in a Linux VM or a remote engine; Docker Desktop bundles the local pieces. The Mac VM's memory is separate from the deployed service's memory limit.
 

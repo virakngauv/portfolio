@@ -72,7 +72,16 @@ test("DigitalOcean example routes the root portfolio domain to a static componen
   );
   assert.match(appSpec, /output_dir: dist/);
   assert.match(appSpec, /exact: virakngauv\.com/);
-  assert.match(appSpec, /name: portfolio-site/);
+
+  const ingress = appSpec.slice(
+    appSpec.indexOf("ingress:\n"),
+    appSpec.indexOf("\nalerts:"),
+  );
+  const portfolioRoute = ingress
+    .split(/\n {4}- match:\n/)
+    .find((route) => route.includes("exact: virakngauv.com"));
+  assert.ok(portfolioRoute);
+  assert.match(portfolioRoute, /component:\n {8}name: portfolio-site/);
 });
 
 // Posted by ChatGPT Chat on behalf of @virakngauv.

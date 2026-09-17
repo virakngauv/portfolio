@@ -2,26 +2,15 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import {
-  checkLinkedIssue,
-  closingIssueNumbers,
-} from "../scripts/check-linked-issue.mjs";
+import { checkLinkedIssue } from "../scripts/check-linked-issue.mjs";
 
 function pullRequestEvent(body, base = "main") {
   return {
-    pull_request: { base: { ref: base }, body },
+    number: 8,
+    pull_request: { base: { ref: base }, body, number: 8 },
     repository: { default_branch: "main" },
   };
 }
-
-test("closing issue references use GitHub closing keywords", () => {
-  assert.deepEqual(
-    closingIssueNumbers("Closes #7\nFixes #12 and resolves #7"),
-    [7, 12],
-  );
-  assert.deepEqual(closingIssueNumbers("Closes: #7"), [7]);
-  assert.deepEqual(closingIssueNumbers("Related to #7"), []);
-});
 
 test("linked issue policy runs trusted base code", () => {
   const generalWorkflow = readFileSync(
@@ -42,30 +31,75 @@ test("linked issue policy runs trusted base code", () => {
   assert.match(policyWorkflow, /run: node scripts\/check-linked-issue\.mjs/);
 });
 
-test("linked issue check rejects missing references and pull-request references", async () => {
-  await assert.rejects(
-    checkLinkedIssue({
-      event: pullRequestEvent("No closing link"),
-      repository: "o/r",
-      token: "x",
-    }),
-    /closing reference/,
+test("CI preserves the required release check contexts", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/ci.yml", import.meta.url),
+    "utf8",
   );
+  assert.match(workflow, /\n {4}name: unit\n/);
+  assert.match(workflow, /\n {4}name: container-smoke\n/);
+});
 
+test("linked issue check uses GitHub's parsed keyword relationships", async () => {
+  let requestBody;
+  const numbers = await checkLinkedIssue({
+    event: pullRequestEvent("Closes #7"),
+    repository: "o/r",
+    token: "x",
+    fetchImpl: async (_url, options) => {
+      assert.ok(options.signal instanceof AbortSignal);
+      requestBody = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          data: {
+            repository: {
+              pullRequest: {
+                closingIssuesReferences: {
+                  nodes: [{ number: 7, repository: { nameWithOwner: "o/r" } }],
+                  pageInfo: { hasNextPage: false, endCursor: null },
+                },
+              },
+            },
+          },
+        }),
+      };
+    },
+  });
+
+  assert.deepEqual(numbers, [7]);
+  assert.match(requestBody.query, /excludeUserLinked: true/);
+  assert.deepEqual(requestBody.variables, {
+    owner: "o",
+    name: "r",
+    number: 8,
+    cursor: null,
+  });
+});
+
+test("linked issue check rejects missing GitHub keyword relationships", async () => {
   await assert.rejects(
     checkLinkedIssue({
-      event: pullRequestEvent("Closes #7"),
+      event: pullRequestEvent("`Closes #7`"),
       repository: "o/r",
       token: "x",
-      fetchImpl: async (_url, options) => {
-        assert.ok(options.signal instanceof AbortSignal);
-        return {
-          ok: true,
-          json: async () => ({ pull_request: {} }),
-        };
-      },
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => ({
+          data: {
+            repository: {
+              pullRequest: {
+                closingIssuesReferences: {
+                  nodes: [],
+                  pageInfo: { hasNextPage: false, endCursor: null },
+                },
+              },
+            },
+          },
+        }),
+      }),
     }),
-    /pull request/,
+    /closing keyword/,
   );
 });
 

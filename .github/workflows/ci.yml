@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   quality:
-    name: Quality
+    name: unit
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -63,7 +63,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
   container-smoke:
-    name: Container smoke
+    name: container-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

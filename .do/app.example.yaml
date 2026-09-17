@@ -43,7 +43,7 @@ services:
         value: game.secrethitman.com
         scope: RUN_TIME
       - key: PIC_MATCH_ALLOWED_ORIGINS
-        value: https://pic-match.virakngauv.com
+        value: https://pic-match.vercel.app,https://pic-match.virakngauv.com
         scope: RUN_TIME
       - key: SECRET_HITMAN_ALLOWED_ORIGINS
         value: https://secrethitman.com,https://www.secrethitman.com

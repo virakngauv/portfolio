@@ -42,6 +42,11 @@ test("portfolio links to every featured project and its live games", () => {
   ]) {
     assert.match(index, new RegExp(`href="${href.replaceAll(".", "\\.")}"`));
   }
+
+  assert.match(
+    appSpec,
+    /PIC_MATCH_ALLOWED_ORIGINS\n {8}value: [^\n]*https:\/\/pic-match\.vercel\.app/,
+  );
 });
 
 test("every linked local asset exists", () => {

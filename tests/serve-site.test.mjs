@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   lanAddresses,
@@ -7,7 +8,7 @@ import {
   resolveRequest,
 } from "../scripts/serve-site.mjs";
 
-const siteRoot = new URL("../site/", import.meta.url).pathname;
+const siteRoot = fileURLToPath(new URL("../site/", import.meta.url));
 
 test("site server accepts valid ports and rejects ambiguous values", () => {
   assert.equal(parsePort("4173"), 4173);

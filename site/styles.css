@@ -44,7 +44,7 @@ a {
 }
 
 a:focus-visible {
-  outline: 3px solid var(--coral);
+  outline: 3px solid var(--blue);
   outline-offset: 4px;
 }
 
@@ -677,6 +677,10 @@ h2 {
   color: var(--ink);
   background: var(--white);
   border-color: var(--white);
+}
+
+.button--light:focus-visible {
+  outline-color: var(--yellow);
 }
 
 .button--light:hover {

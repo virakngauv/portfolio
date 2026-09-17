@@ -14,6 +14,7 @@ const appSpec = readFileSync(
   new URL("../.do/app.example.yaml", import.meta.url),
   "utf8",
 );
+const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
 
 test("portfolio page exposes its primary content and accessible landmarks", () => {
   assert.match(index, /<html lang="en">/);
@@ -59,12 +60,27 @@ test("every linked local asset exists", () => {
 });
 
 test("styles include keyboard, mobile, and reduced-motion behavior", () => {
-  assert.match(styles, /:focus-visible/);
+  assert.match(
+    styles,
+    /a:focus-visible\s*\{[^}]*outline: 3px solid var\(--blue\)/s,
+  );
+  assert.match(
+    styles,
+    /\.button--light:focus-visible\s*\{[^}]*outline-color: var\(--yellow\)/s,
+  );
   assert.match(styles, /@media \(max-width: 580px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
 test("DigitalOcean example routes the root portfolio domain to a static component", () => {
+  assert.match(
+    readme,
+    /importing the complete reviewed \[`.do\/app\.example\.yaml`\]/,
+  );
+  assert.match(
+    readme,
+    /`portfolio-site` static component[^\n]+serving `dist\/`/,
+  );
   assert.match(appSpec, /static_sites:\n {2}- name: portfolio-site/);
   assert.match(
     appSpec,

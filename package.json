@@ -3,14 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": "11.9.0"
+  },
   "packageManager": "pnpm@11.9.0",
   "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/serve-site.mjs",
+    "build": "node scripts/build-site.mjs",
     "start": "node --env-file-if-exists=.env runtime/index.mjs",
-    "check": "node scripts/check.mjs",
+    "runtime:start": "pnpm start",
+    "site:serve": "pnpm dev",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "node scripts/check.mjs",
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown",
     "test": "node --test tests/*.test.mjs",
+    "test:watch": "node --test --watch tests/*.test.mjs",
+    "test:e2e": "playwright test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "games:install": "node scripts/install-games.mjs",
     "smoke": "node --env-file-if-exists=.env scripts/smoke.mjs"
   },
-  "author": "Posted by ChatGPT Chat on behalf of @virakngauv."
+  "author": "Posted by ChatGPT Chat on behalf of @virakngauv.",
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "eslint": "10.10.0",
+    "globals": "17.12.0",
+    "prettier": "3.9.6"
+  }
 }

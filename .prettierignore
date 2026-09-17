@@ -1,0 +1,22 @@
+dist/
+node_modules/
+playwright-report/
+projects/
+test-results/
+
+# Legacy deployment/runtime sources retain their existing formatting to keep
+# portfolio changes reviewable. New tooling and site files remain formatted.
+.github/portfolio-projects.json
+.github/workflows/upstream-ready.yml
+docs/automatic-releases.md
+runtime/
+scripts/*.mjs
+!scripts/build-site.mjs
+!scripts/check-linked-issue.mjs
+!scripts/serve-site.mjs
+tests/*.mjs
+tests/fixtures/
+!tests/build-site.test.mjs
+!tests/linked-issue.test.mjs
+!tests/serve-site.test.mjs
+!tests/site.test.mjs

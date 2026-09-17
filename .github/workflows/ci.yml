@@ -1,4 +1,4 @@
-name: Runtime CI
+name: Portfolio CI
 on:
   pull_request:
   push:
@@ -6,12 +6,13 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: runtime-${{ github.workflow }}-${{ github.ref }}
+  group: portfolio-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  unit:
+  quality:
+    name: unit
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -20,9 +21,49 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
-      - run: node scripts/check.mjs
-      - run: node --test tests/*.test.mjs
+      - name: Install pnpm
+        run: npm install --global pnpm@11.9.0
+      - name: Install development dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run quality suite
+        run: pnpm check
+  browser:
+    name: Browser (${{ matrix.project }})
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install pnpm
+        run: npm install --global pnpm@11.9.0
+      - name: Install development dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.project }}
+      - name: Run browser smoke tests
+        run: pnpm test:e2e --project=${{ matrix.project }}
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
   container-smoke:
+    name: container-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -60,4 +101,5 @@ jobs:
         run: |
           docker logs runtime || true
           docker rm -f runtime || true
+
 # Posted by ChatGPT Chat on behalf of @virakngauv.

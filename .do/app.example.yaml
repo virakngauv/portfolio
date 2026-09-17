@@ -46,7 +46,7 @@ services:
         value: https://pic-match.vercel.app,https://pic-match.virakngauv.com
         scope: RUN_TIME
       - key: SECRET_HITMAN_ALLOWED_ORIGINS
-        value: https://secrethitman.com,https://www.secrethitman.com
+        value: https://secret-hitman-5.vercel.app,https://secrethitman.com,https://www.secrethitman.com
         scope: RUN_TIME
       - key: CLIENT_IP_MODE
         value: digitalocean

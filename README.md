@@ -154,7 +154,7 @@ NEXT_PUBLIC_GAME_SERVER_URL=http://secret-hitman.localhost:8080 pnpm dev:web --p
 
 ### DigitalOcean and Cloudflare setup
 
-1. Create one App Platform app by importing the complete reviewed [`.do/app.example.yaml`](.do/app.example.yaml), rather than creating only the `games` service. Confirm the import creates both the `portfolio-site` static component (building from `/` and serving `dist/`) and the `games` Docker service (HTTP port 8080 with health path `/_runtime/healthz`). Use this repository's reviewed revision, leave the games run-command override empty, review the region and displayed cost, and keep deploy-on-push disabled during initial validation. Grant source access for the parent repository and its submodules.
+1. Create one App Platform app by importing the complete reviewed [`.do/app.example.yaml`](.do/app.example.yaml), rather than creating only the `games` service. Before the initial import, change both `deploy_on_push` entries to `false`; the checked-in example represents the protected automatic-release state described above and enables both entries. Confirm the import creates both the `portfolio-site` static component (building from `/` and serving `dist/`) and the `games` Docker service (HTTP port 8080 with health path `/_runtime/healthz`). Use this repository's reviewed revision, leave the games run-command override empty, review the region and displayed cost, and keep deploy-on-push disabled during initial validation. Grant source access for the parent repository and its submodules.
 2. Apply the runtime environment and exact-host ingress rules from [`.do/app.example.yaml`](.do/app.example.yaml), adjusted to the actual frontend domains. Use `CLIENT_IP_MODE=digitalocean` behind App Platform. Keep internal child ports unexposed and preserve request paths. The example file is not automatically synchronized with a running app.
 3. In App Platform, open **Networking → Domains → Add domain**, add each backend hostname, and select **You manage your domain**. Keep Cloudflare nameservers. Copy the exact CNAME target DigitalOcean supplies for each domain.
 4. In Cloudflare **DNS → Records**, add the records below. Use **DNS only** (gray cloud) for this setup and TTL Auto. Enter only a target hostname, without `https://`, a port, or a path. Inspect any conflicting record at the same name before replacing it; preserve existing frontend and mail records.
@@ -175,7 +175,7 @@ Provider references: [create an app](https://docs.digitalocean.com/products/app-
 Check the **actual frontend origin in the browser address bar**, including redirects. `https://secrethitman.com` and `https://www.secrethitman.com` are different origins. Our deployed backend returned 200 for the first origin and 403 for the second, while DNS and `/healthz` were working correctly. The fix was to allow both intended frontend origins in DigitalOcean:
 
 ```dotenv
-SECRET_HITMAN_ALLOWED_ORIGINS=https://secrethitman.com,https://www.secrethitman.com
+SECRET_HITMAN_ALLOWED_ORIGINS=https://secret-hitman-5.vercel.app,https://secrethitman.com,https://www.secrethitman.com
 ```
 
 Save and deploy the backend configuration, then refresh the frontend. This fix needs neither a DNS change nor a frontend rebuild. The checked-in App Spec example now includes both origins. Preview frontend domains also need explicit permission; setting a frontend variable for “All Environments” does not authorize preview origins on the backend.

@@ -47,6 +47,10 @@ test("portfolio links to every featured project and its live games", () => {
     appSpec,
     /PIC_MATCH_ALLOWED_ORIGINS\n {8}value: [^\n]*https:\/\/pic-match\.vercel\.app/,
   );
+  assert.match(
+    appSpec,
+    /SECRET_HITMAN_ALLOWED_ORIGINS\n {8}value: [^\n]*https:\/\/secret-hitman-5\.vercel\.app/,
+  );
 });
 
 test("every linked local asset exists", () => {
@@ -85,6 +89,10 @@ test("DigitalOcean example routes the root portfolio domain to a static componen
   assert.match(
     readme,
     /`portfolio-site` static component[^\n]+serving `dist\/`/,
+  );
+  assert.match(
+    readme,
+    /Before the initial import, change both `deploy_on_push` entries to `false`/,
   );
   assert.match(appSpec, /static_sites:\n {2}- name: portfolio-site/);
   assert.match(

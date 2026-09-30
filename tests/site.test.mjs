@@ -6,6 +6,10 @@ const index = readFileSync(
   new URL("../site/index.html", import.meta.url),
   "utf8",
 );
+const projects = readFileSync(
+  new URL("../site/projects.html", import.meta.url),
+  "utf8",
+);
 const styles = readFileSync(
   new URL("../site/styles.css", import.meta.url),
   "utf8",
@@ -20,27 +24,21 @@ test("portfolio page exposes its primary content and accessible landmarks", () =
   assert.match(index, /<html lang="en">/);
   assert.match(index, /<a class="skip-link" href="#main-content">/);
   assert.match(index, /<nav aria-label="Primary navigation">/);
-  assert.match(index, /<main id="main-content">/);
-  assert.match(index, /<h1 id="hero-title">/);
-  assert.match(
-    index,
-    /<section class="work" id="work" aria-labelledby="work-title">/,
-  );
-  assert.match(
-    index,
-    /<section class="about" id="about" aria-labelledby="about-title">/,
-  );
+  assert.match(index, /<main id="main-content" tabindex="-1">/);
+  assert.match(index, /<h1>Virak Ngauv<\/h1>/);
+  assert.match(index, /href="\.\/projects.html"/);
+  assert.match(projects, /<h1>Projects<\/h1>/);
+  assert.match(index, /<section class="about" aria-labelledby="about-title">/);
 });
 
 test("portfolio links to every featured project and its live games", () => {
-  for (const href of [
-    "https://pic-match.vercel.app",
-    "https://github.com/virakngauv/pic-match",
-    "https://secret-hitman-5.vercel.app",
-    "https://github.com/virakngauv/secret-hitman-5",
-    "https://github.com/virakngauv/portfolio",
-  ]) {
-    assert.match(index, new RegExp(`href="${href.replaceAll(".", "\\.")}"`));
+  const entries = JSON.parse(
+    readFileSync(new URL("../site/projects.json", import.meta.url), "utf8"),
+  );
+  for (const entry of entries) {
+    for (const href of [entry.url, entry.github.url]) {
+      assert.ok(projects.includes(`href="${href}"`));
+    }
   }
 
   assert.match(
@@ -54,9 +52,9 @@ test("portfolio links to every featured project and its live games", () => {
 });
 
 test("every linked local asset exists", () => {
-  const localAssets = [...index.matchAll(/(?:href|src)="\.\/([^"#?]+)"/g)].map(
-    (match) => match[1],
-  );
+  const localAssets = [
+    ...(index + projects).matchAll(/(?:href|src)="\.\/([^"#?]+)"/g),
+  ].map((match) => match[1]);
   assert.ok(localAssets.length > 0);
 
   for (const asset of localAssets) {
@@ -71,13 +69,9 @@ test("every linked local asset exists", () => {
 test("styles include keyboard, mobile, and reduced-motion behavior", () => {
   assert.match(
     styles,
-    /a:focus-visible\s*\{[^}]*outline: 3px solid var\(--blue\)/s,
+    /a:focus-visible\s*\{[^}]*outline: 2px solid currentColor/s,
   );
-  assert.match(
-    styles,
-    /\.button--light:focus-visible\s*\{[^}]*outline-color: var\(--yellow\)/s,
-  );
-  assert.match(styles, /@media \(max-width: 580px\)/);
+  assert.match(styles, /@media \(max-width: 700px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 

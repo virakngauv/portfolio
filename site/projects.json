@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Pic Match",
+    "description": "A picture-matching game you can play with friends in a shared room.",
+    "image": "assets/pic-match.jpg",
+    "url": "https://pic-match.virakngauv.com",
+    "github": {
+      "url": "https://github.com/virakngauv/pic-match",
+      "private": false
+    }
+  },
+  {
+    "title": "Secret Hitman",
+    "description": "A party game with private word boards, shared clues, and a host who leads each round.",
+    "image": "assets/secret-hitman.jpg",
+    "url": "https://secrethitman.com",
+    "github": {
+      "url": "https://github.com/virakngauv/secret-hitman-5",
+      "private": false
+    }
+  },
+  {
+    "title": "Online Scavenger Hunt",
+    "description": "Solve a series of online puzzles, with hints if you get stuck.",
+    "image": "assets/online-scavenger-hunt.jpg",
+    "url": "https://osh.virakngauv.com/",
+    "github": {
+      "url": "https://github.com/virakngauv/online-scavenger-hunt",
+      "private": true
+    }
+  }
+]

@@ -9,8 +9,8 @@
   },
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env.local scripts/serve-site.mjs",
-    "build": "node scripts/build-site.mjs",
+    "dev": "node scripts/render-projects.mjs && node --env-file-if-exists=.env.local scripts/serve-site.mjs",
+    "build": "node scripts/render-projects.mjs && node scripts/build-site.mjs",
     "start": "node --env-file-if-exists=.env runtime/index.mjs",
     "runtime:start": "pnpm start",
     "site:serve": "pnpm dev",
@@ -23,7 +23,8 @@
     "test:e2e": "playwright test",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "games:install": "node scripts/install-games.mjs",
-    "smoke": "node --env-file-if-exists=.env scripts/smoke.mjs"
+    "smoke": "node --env-file-if-exists=.env scripts/smoke.mjs",
+    "projects:build": "node scripts/render-projects.mjs"
   },
   "author": "Posted by ChatGPT Chat on behalf of @virakngauv.",
   "devDependencies": {

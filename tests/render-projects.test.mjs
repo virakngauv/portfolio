@@ -21,7 +21,7 @@ test("public source links have no visibility label; private links identify restr
   assert.match(privateHtml, />GitHub \(private\)<\/a>/);
   assert.match(
     privateHtml,
-    /aria-label="GitHub for Notes &amp; &quot;Lists&quot; \(private\)"/,
+    /aria-label="GitHub \(private\) for Notes &amp; &quot;Lists&quot;"/,
   );
   assert.match(privateHtml, /href="https:\/\/github.com\/example\/notes"/);
 });
@@ -36,6 +36,7 @@ test("project images and titles link to the product and GitHub stays a separate 
     assert.ok(depth >= 0 && depth <= 1, "links must not be nested");
   }
   assert.equal(depth, 0);
+  assert.match(html, /aria-label="Visit project, Notes &amp; &quot;Lists&quot;"/);
   assert.throws(
     () => renderProject({ ...project, github: { url: project.github.url } }),
     /Set github.private/,
@@ -51,4 +52,6 @@ test("the gallery grows with additional projects without requiring a category", 
   );
   assert.equal([...html.matchAll(/class="project-card"/g)].length, 7);
   assert.match(html, /<h2>Project 7<\/h2>/);
+  assert.equal([...html.matchAll(/loading="eager"/g)].length, 3);
+  assert.equal([...html.matchAll(/loading="lazy"/g)].length, 4);
 });

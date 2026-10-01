@@ -1,6 +1,7 @@
 /* global document, window */
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { extname } from "node:path";
 
 const projects = JSON.parse(
   readFileSync(new URL("../site/projects.json", import.meta.url), "utf8"),
@@ -18,9 +19,9 @@ test("primary navigation and project links are usable", async ({ page }) => {
   for (const project of projects) {
     const { title: name, url: product, github } = project;
     const source = github.url;
-    const sourceName = `GitHub for ${name}${github.private ? " (private)" : ""}`;
+    const sourceName = `GitHub${github.private ? " (private)" : ""} for ${name}`;
     await expect(
-      page.getByRole("link", { name: `Visit ${name}`, exact: true }),
+      page.getByRole("link", { name: `Visit project, ${name}`, exact: true }),
     ).toHaveAttribute("href", product);
     await expect(
       page.getByRole("link", { name: sourceName, exact: true }),
@@ -28,6 +29,14 @@ test("primary navigation and project links are usable", async ({ page }) => {
     await expect(
       page.getByRole("link", { name: sourceName, exact: true }),
     ).toHaveText(github.private ? "GitHub (private)" : "GitHub");
+    for (const link of [
+      page.getByRole("link", { name: `Visit project, ${name}`, exact: true }),
+      page.getByRole("link", { name: sourceName, exact: true }),
+    ]) {
+      expect(await link.getAttribute("aria-label")).toContain(
+        await link.innerText(),
+      );
+    }
   }
   await page.getByRole("link", { name: "Home", exact: true }).click();
   await expect(page.getByRole("heading", { name: "About me" })).toBeVisible();
@@ -102,8 +111,19 @@ test("project artwork loads with an image content type", async ({
         ),
       )
       .toBe(true);
-    const response = await request.get(await image.getAttribute("src"));
-    expect(response.headers()["content-type"]).toBe("image/jpeg");
+    const src = await image.getAttribute("src");
+    const expectedType = {
+      ".jpg": "image/jpeg",
+      ".png": "image/png",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+    }[extname(new URL(src, page.url()).pathname)];
+    expect(
+      expectedType,
+      "project image must use a supported format",
+    ).toBeTruthy();
+    const response = await request.get(src);
+    expect(response.headers()["content-type"]).toBe(expectedType);
   }
   expect(
     await page.evaluate(

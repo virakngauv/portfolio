@@ -9,20 +9,20 @@ const escape = (value) =>
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
 
-export function renderProject(project) {
+export function renderProject(project, index = 0) {
   if (typeof project.github.private !== "boolean")
     throw new Error(`Set github.private for ${project.title}`);
   const label = project.github.private ? "GitHub (private)" : "GitHub";
   return `
           <article class="project-card">
             <a class="project" href="${escape(project.url)}" aria-label="View ${escape(project.title)}">
-              <img src="./${escape(project.image)}" alt="" width="1000" height="667" loading="lazy" />
+              <img src="./${escape(project.image)}" alt="" width="1000" height="667" loading="${index < 3 ? "eager" : "lazy"}" />
               <h2>${escape(project.title)}</h2>
             </a>
             <p>${escape(project.description)}</p>
             <div class="project-links">
-              <a href="${escape(project.url)}" aria-label="Visit ${escape(project.title)}">Visit project</a>
-              <a href="${escape(project.github.url)}" aria-label="GitHub for ${escape(project.title)}${project.github.private ? " (private)" : ""}">${label}</a>
+              <a href="${escape(project.url)}" aria-label="Visit project, ${escape(project.title)}">Visit project</a>
+              <a href="${escape(project.github.url)}" aria-label="${label} for ${escape(project.title)}">${label}</a>
             </div>
           </article>`;
 }

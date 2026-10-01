@@ -43,6 +43,14 @@ Then open `http://127.0.0.1:4173`. Set `SITE_PORT` in `.env.local` to use a diff
 
 `pnpm build` recreates the deployable `dist/` directory from `site/`. The example App Platform spec installs with the frozen lockfile, runs that build, and publishes `dist/` as a separate static component at `virakngauv.com`; applying the example or changing DNS remains an explicit deployment step.
 
+### Adding projects
+
+The homepage uses the split layout. `site/projects.json` supplies the gallery on `projects.html`. Each entry has a title, a description, a local image path, a product URL, and a `github` object with `url` and `private` fields. Games and other software use the same fields.
+
+Before setting `github.private`, verify the repository with `gh repo view OWNER/REPO --json visibility,isPrivate`. Public links say "GitHub". Private links say "GitHub (private)" and still point to the repository, which requires access. Keep the visibility field current if repository access changes.
+
+`pnpm dev` and `pnpm build` generate the static gallery before starting or building. After editing the project list during a running preview, run `pnpm projects:build` and refresh the page. The checked-in gallery stays available without client-side JavaScript. Images are local assets. Pic Match and Secret Hitman use illustrations, and Online Scavenger Hunt uses a screenshot of its introduction.
+
 ### Development commands
 
 | Command                             | Purpose                                                       |

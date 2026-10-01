@@ -26,7 +26,7 @@ test("static build is deterministic and removes stale output", () => {
     assert.equal(first.includes("stale.txt"), false);
     assert.equal(
       readFileSync(join(destination, "index.html"), "utf8").includes(
-        '<main id="main-content">',
+        '<main id="main-content" tabindex="-1">',
       ),
       true,
     );

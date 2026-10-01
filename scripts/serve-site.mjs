@@ -26,6 +26,9 @@ const contentTypes = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
   [".svg", "image/svg+xml"],
+  [".jpg", "image/jpeg"],
+  [".png", "image/png"],
+  [".webp", "image/webp"],
 ]);
 
 export function resolveRequest(siteRoot, pathname) {

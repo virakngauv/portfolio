@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { format } from "prettier";
 import { renderProject, renderProjects } from "../scripts/render-projects.mjs";
 
 const project = {
@@ -9,6 +11,18 @@ const project = {
   url: "https://example.com/notes",
   github: { url: "https://github.com/example/notes", private: false },
 };
+
+test("the checked-in gallery matches the project data and renderer", async () => {
+  const entries = JSON.parse(
+    readFileSync(new URL("../site/projects.json", import.meta.url), "utf8"),
+  );
+  const expected = await format(renderProjects(entries), { parser: "html" });
+  assert.equal(
+    readFileSync(new URL("../site/projects.html", import.meta.url), "utf8"),
+    expected,
+    "Run pnpm projects:build and commit the generated gallery",
+  );
+});
 
 test("public source links have no visibility label; private links identify restricted access", () => {
   const publicHtml = renderProject(project);

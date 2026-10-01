@@ -41,6 +41,21 @@ test("portfolio links to every featured project and its live games", () => {
     }
   }
 
+  for (const [title, key] of [
+    ["Pic Match", "PIC_MATCH_ALLOWED_ORIGINS"],
+    ["Secret Hitman", "SECRET_HITMAN_ALLOWED_ORIGINS"],
+  ]) {
+    const origin = new URL(entries.find((entry) => entry.title === title).url)
+      .origin;
+    const value = appSpec.match(
+      new RegExp(`${key}\\n {8}value: ([^\\n]+)`),
+    )?.[1];
+    assert.ok(
+      value?.split(",").includes(origin),
+      `${key} must allow ${origin}`,
+    );
+  }
+
   assert.match(
     appSpec,
     /PIC_MATCH_ALLOWED_ORIGINS\n {8}value: [^\n]*https:\/\/pic-match\.vercel\.app/,

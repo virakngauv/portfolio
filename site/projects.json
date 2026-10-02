@@ -7,7 +7,8 @@
     "github": {
       "url": "https://github.com/virakngauv/pic-match",
       "private": false
-    }
+    },
+    "detail": "Real-time multiplayer rooms with support for reconnecting after a dropped connection."
   },
   {
     "title": "Secret Hitman",
@@ -17,7 +18,8 @@
     "github": {
       "url": "https://github.com/virakngauv/secret-hitman-5",
       "private": false
-    }
+    },
+    "detail": "The server controls hidden card roles, scoring, and host-only actions."
   },
   {
     "title": "Online Scavenger Hunt",
@@ -28,6 +30,7 @@
       "url": "https://github.com/virakngauv/online-scavenger-hunt",
       "private": true
     },
-    "imageZoom": "gentle"
+    "imageZoom": "gentle",
+    "detail": "Progress is saved locally so players can leave and return to the hunt."
   }
 ]

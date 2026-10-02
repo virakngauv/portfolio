@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Virak Ngauv's personal website and software projects."
+      content="I build useful web tools and playful games. Explore my projects and try them with friends."
     />
-    <meta name="theme-color" content="#ffffff" />
     <meta property="og:title" content="Virak Ngauv" />
-    <meta property="og:description" content="Personal software projects." />
+    <meta
+      property="og:description"
+      content="I build useful web tools and playful games. Explore my projects and try them with friends."
+    />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.virakngauv.com/" />
+    <meta
+      property="og:image"
+      content="https://www.virakngauv.com/assets/pic-match.jpg"
+    />
+    <meta property="og:image:alt" content="A two-player Pic Match game" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="https://www.virakngauv.com/" />
+    <meta name="theme-color" content="#ffffff" />
     <title>Virak Ngauv</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
@@ -26,16 +37,138 @@
         <a href="https://github.com/virakngauv">GitHub</a>
       </header>
       <main id="main-content" tabindex="-1">
-        <h1>Virak Ngauv</h1>
-        <section class="about" aria-labelledby="about-title">
-          <h2 id="about-title">About me</h2>
-          <p>
-            I love coding and making useful things. I like helping people,
-            whether that's through a small tool or a little life hack that makes
-            their day easier.
-          </p>
+        <div class="intro">
+          <h1>Virak Ngauv</h1>
+          <section class="about" aria-labelledby="about-title">
+            <h2 id="about-title">About me</h2>
+            <p class="positioning">
+              I build useful web tools and playful games.
+            </p>
+            <p>
+              I like turning small ideas into software people can use, whether
+              that's a tool that makes their day easier or a game to play with
+              friends.
+            </p>
+          </section>
+        </div>
+        <section class="selected-projects" aria-labelledby="projects-title">
+          <div class="section-heading">
+            <h2 id="projects-title">Selected projects</h2>
+            <a class="projects-link" href="./projects.html">View my projects</a>
+          </div>
+          <div class="gallery">
+            <article class="project-card">
+              <a
+                class="project"
+                href="https://pic-match.virakngauv.com"
+                aria-label="View Pic Match"
+              >
+                <span class="project-media"
+                  ><img
+                    src="./assets/pic-match.jpg"
+                    alt=""
+                    width="1176"
+                    height="1470"
+                    loading="eager"
+                /></span>
+                <h3>Pic Match</h3>
+              </a>
+              <p>
+                A picture-matching game you can play with friends in a shared
+                room.
+              </p>
+              <p class="project-detail">
+                Real-time multiplayer rooms with support for reconnecting after
+                a dropped connection.
+              </p>
+              <div class="project-links">
+                <a
+                  href="https://pic-match.virakngauv.com"
+                  aria-label="Visit project, Pic Match"
+                  >Visit project</a
+                >
+                <a
+                  href="https://github.com/virakngauv/pic-match"
+                  aria-label="GitHub for Pic Match"
+                  >GitHub</a
+                >
+              </div>
+            </article>
+            <article class="project-card">
+              <a
+                class="project"
+                href="https://secrethitman.com"
+                aria-label="View Secret Hitman"
+              >
+                <span class="project-media"
+                  ><img
+                    src="./assets/secret-hitman.jpg"
+                    alt=""
+                    width="1176"
+                    height="1470"
+                    loading="lazy"
+                /></span>
+                <h3>Secret Hitman</h3>
+              </a>
+              <p>
+                A party game with private word boards, shared clues, and a host
+                who leads each round.
+              </p>
+              <p class="project-detail">
+                The server controls hidden card roles, scoring, and host-only
+                actions.
+              </p>
+              <div class="project-links">
+                <a
+                  href="https://secrethitman.com"
+                  aria-label="Visit project, Secret Hitman"
+                  >Visit project</a
+                >
+                <a
+                  href="https://github.com/virakngauv/secret-hitman-5"
+                  aria-label="GitHub for Secret Hitman"
+                  >GitHub</a
+                >
+              </div>
+            </article>
+            <article class="project-card">
+              <a
+                class="project"
+                href="https://osh.virakngauv.com/"
+                aria-label="View Online Scavenger Hunt"
+              >
+                <span class="project-media project-media--gentle-zoom"
+                  ><img
+                    src="./assets/online-scavenger-hunt.jpg"
+                    alt=""
+                    width="1176"
+                    height="1470"
+                    loading="lazy"
+                /></span>
+                <h3>Online Scavenger Hunt</h3>
+              </a>
+              <p>
+                Solve a series of online puzzles, with hints if you get stuck.
+              </p>
+              <p class="project-detail">
+                Progress is saved locally so players can leave and return to the
+                hunt.
+              </p>
+              <div class="project-links">
+                <a
+                  href="https://osh.virakngauv.com/"
+                  aria-label="Visit project, Online Scavenger Hunt"
+                  >Visit project</a
+                >
+                <a
+                  href="https://github.com/virakngauv/online-scavenger-hunt"
+                  aria-label="GitHub (private) for Online Scavenger Hunt"
+                  >GitHub (private)</a
+                >
+              </div>
+            </article>
+          </div>
         </section>
-        <a class="projects-link" href="./projects.html">View my projects</a>
       </main>
     </div>
   </body>

@@ -45,7 +45,7 @@ Then open `http://127.0.0.1:4173`. Set `SITE_PORT` in `.env.local` to use a diff
 
 ### Adding projects
 
-The homepage uses the split layout. `site/projects.json` supplies the gallery on `projects.html`. Each entry has a title, a description, a local image path, a product URL, and a `github` object with `url` and `private` fields. Games and other software use the same fields.
+The homepage pairs a short introduction with the first three projects. `site/projects.json` supplies both the homepage cards and the full gallery on `projects.html`; run `pnpm projects:build` after editing it. Each entry has a title, a description, an optional `detail` describing a verified project constraint or implementation choice, a local image path, a product URL, and a `github` object with `url` and `private` fields. Games and other software use the same fields.
 
 Before setting `github.private`, verify the repository with `gh repo view OWNER/REPO --json visibility,isPrivate`. Public links say "GitHub". Private links say "GitHub (private)" and still point to the repository, which requires access. Keep the visibility field current if repository access changes.
 

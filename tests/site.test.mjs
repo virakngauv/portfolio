@@ -38,6 +38,8 @@ test("portfolio links to every featured project and its live games", () => {
   for (const entry of entries) {
     for (const href of [entry.url, entry.github.url]) {
       assert.ok(projects.includes(`href="${href}"`));
+      if (entries.indexOf(entry) < 3)
+        assert.ok(index.includes(`href="${href}"`));
     }
   }
 

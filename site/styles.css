@@ -155,9 +155,6 @@ header a,
   transform: scale(1.15);
   transform-origin: 50% 69%;
 }
-.project-media--no-zoom img {
-  transform: scale(1);
-}
 .project h2,
 .project h3 {
   font-size: 18px;

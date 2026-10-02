@@ -75,9 +75,6 @@ test("image zoom variants follow project data instead of gallery position", () =
 
   const gentleHtml = renderProject({ ...project, imageZoom: "gentle" });
   assert.match(gentleHtml, /class="project-media project-media--gentle-zoom"/);
-
-  const noZoomHtml = renderProject({ ...project, imageZoom: "none" });
-  assert.match(noZoomHtml, /class="project-media project-media--no-zoom"/);
 });
 
 test("the gallery grows with additional projects without requiring a category", () => {

@@ -37,7 +37,6 @@
     "title": "Work Timer",
     "description": "Track work and break sessions at your own pace.",
     "image": "assets/work-timer.png",
-    "imageZoom": "none",
     "url": "https://work-timer.virakngauv.com",
     "github": {
       "url": "https://github.com/virakngauv/work-timer",

@@ -14,7 +14,11 @@ export function renderProject(project, index = 0, heading = "h2") {
     throw new Error(`Set github.private for ${project.title}`);
   const label = project.github.private ? "GitHub (private)" : "GitHub";
   const mediaClass =
-    project.imageZoom === "gentle" ? " project-media--gentle-zoom" : "";
+    project.imageZoom === "gentle"
+      ? " project-media--gentle-zoom"
+      : project.imageZoom === "none"
+        ? " project-media--no-zoom"
+        : "";
   return `
           <article class="project-card">
             <a class="project" href="${escape(project.url)}" aria-label="View ${escape(project.title)}">

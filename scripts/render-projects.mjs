@@ -16,7 +16,7 @@ export function renderProject(project, index = 0) {
   return `
           <article class="project-card">
             <a class="project" href="${escape(project.url)}" aria-label="View ${escape(project.title)}">
-              <img src="./${escape(project.image)}" alt="" width="1000" height="667" loading="${index < 3 ? "eager" : "lazy"}" />
+              <span class="project-media"><img src="./${escape(project.image)}" alt="" width="1176" height="1470" loading="${index < 3 ? "eager" : "lazy"}" /></span>
               <h2>${escape(project.title)}</h2>
             </a>
             <p>${escape(project.description)}</p>

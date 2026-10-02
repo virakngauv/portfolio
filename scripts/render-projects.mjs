@@ -13,10 +13,12 @@ export function renderProject(project, index = 0) {
   if (typeof project.github.private !== "boolean")
     throw new Error(`Set github.private for ${project.title}`);
   const label = project.github.private ? "GitHub (private)" : "GitHub";
+  const mediaClass =
+    project.imageZoom === "gentle" ? " project-media--gentle-zoom" : "";
   return `
           <article class="project-card">
             <a class="project" href="${escape(project.url)}" aria-label="View ${escape(project.title)}">
-              <span class="project-media"><img src="./${escape(project.image)}" alt="" width="1176" height="1470" loading="${index < 3 ? "eager" : "lazy"}" /></span>
+              <span class="project-media${mediaClass}"><img src="./${escape(project.image)}" alt="" width="1176" height="1470" loading="${index < 3 ? "eager" : "lazy"}" /></span>
               <h2>${escape(project.title)}</h2>
             </a>
             <p>${escape(project.description)}</p>

@@ -118,7 +118,7 @@ h1 {
 }
 /* Online Scavenger Hunt's puzzle text spans most of the frame, so it uses a
    gentler rest zoom to keep the lines unclipped. */
-.project-card:nth-child(3) img {
+.project-media--gentle-zoom img {
   transform: scale(1.2);
   transform-origin: 50% 54%;
 }

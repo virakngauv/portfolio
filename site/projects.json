@@ -27,6 +27,7 @@
     "github": {
       "url": "https://github.com/virakngauv/online-scavenger-hunt",
       "private": true
-    }
+    },
+    "imageZoom": "gentle"
   }
 ]

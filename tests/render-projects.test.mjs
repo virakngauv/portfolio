@@ -57,6 +57,18 @@ test("project images and titles link to the product and GitHub stays a separate 
   );
 });
 
+test("image zoom variants follow project data instead of gallery position", () => {
+  const defaultHtml = renderProject(project);
+  assert.match(defaultHtml, /class="project-media"/);
+  assert.doesNotMatch(defaultHtml, /project-media--gentle-zoom/);
+
+  const gentleHtml = renderProject({ ...project, imageZoom: "gentle" });
+  assert.match(
+    gentleHtml,
+    /class="project-media project-media--gentle-zoom"/,
+  );
+});
+
 test("the gallery grows with additional projects without requiring a category", () => {
   const html = renderProjects(
     Array.from({ length: 7 }, (_, index) => ({

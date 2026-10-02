@@ -97,13 +97,30 @@ h1 {
   display: block;
   text-decoration: none;
 }
+.project-media {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
 .project img {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
-  margin-bottom: 20px;
+  transform: scale(1.15);
+  transform-origin: 50% 0%;
+  transition: transform 0.15s ease;
+}
+.project:hover .project-media img,
+.project:focus-visible .project-media img {
+  transform: scale(1);
+}
+/* Online Scavenger Hunt's puzzle text spans most of the frame, so it uses a
+   gentler rest zoom to keep the lines unclipped. */
+.project-media--gentle-zoom img {
+  transform: scale(1.15);
+  transform-origin: 50% 69%;
 }
 .project h2 {
   font-size: 16px;
@@ -182,5 +199,8 @@ h1 {
   *::before,
   *::after {
     scroll-behavior: auto !important;
+  }
+  .project img {
+    transition: none;
   }
 }

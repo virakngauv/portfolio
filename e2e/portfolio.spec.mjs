@@ -131,3 +131,49 @@ test("project artwork loads with an image content type", async ({
     ),
   ).toBe(true);
 });
+
+test("homepage work, tablet layout, and touch targets remain usable", async ({
+  page,
+}) => {
+  for (const path of ["/", "/projects.html"]) {
+    for (const [width, columns] of [
+      [390, 1],
+      [820, 2],
+      [1280, 3],
+    ]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      const cards = page.locator(".project-card");
+      const visibleProjects = path === "/" ? projects.slice(0, 3) : projects;
+      await expect(cards).toHaveCount(visibleProjects.length);
+      for (const project of visibleProjects) {
+        await expect(
+          page.getByRole("link", {
+            name: `View ${project.title}`,
+            exact: true,
+          }),
+        ).toHaveAttribute("href", project.url);
+      }
+      const boxes = await Promise.all(
+        (await cards.all()).map((card) => card.boundingBox()),
+      );
+      if (columns === 1)
+        expect(boxes[1].y).toBeGreaterThan(boxes[0].y + boxes[0].height);
+      else expect(Math.abs(boxes[1].y - boxes[0].y)).toBeLessThan(2);
+      if (columns === 2)
+        expect(boxes[2].y).toBeGreaterThan(boxes[0].y + boxes[0].height);
+      else if (columns === 3)
+        expect(Math.abs(boxes[2].y - boxes[0].y)).toBeLessThan(2);
+      for (const link of await page
+        .locator("header a, .project-links a, .projects-link")
+        .all()) {
+        expect((await link.boundingBox()).height).toBeGreaterThanOrEqual(44);
+      }
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    }
+  }
+});

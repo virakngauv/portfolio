@@ -1,5 +1,10 @@
 :root {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 16px;
   line-height: 1.65;
   color: #252525;
@@ -49,37 +54,65 @@ header a[aria-current="page"] {
 }
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
 h1 {
-  font-size: 34px;
+  font-size: clamp(36px, 4vw, 48px);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.035em;
 }
 .home-page main {
+  margin-top: 80px;
+}
+.intro {
   display: grid;
-  grid-template-columns: 250px minmax(0, 520px);
-  gap: 0 56px;
-  margin-top: 112px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 48px;
 }
 .about {
-  max-width: 520px;
-  margin-top: 4px;
+  max-width: 580px;
 }
 .about h2 {
   font-size: 17px;
   font-weight: 500;
+  margin-bottom: 16px;
+}
+.about .positioning {
+  font-size: clamp(22px, 2.5vw, 28px);
   line-height: 1.4;
-  margin-bottom: 20px;
+  letter-spacing: -0.025em;
 }
 .about p + p {
-  margin-top: 20px;
+  margin-top: 16px;
+}
+.selected-projects {
+  margin-top: 80px;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.section-heading h2 {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
 }
 .projects-link {
-  grid-column: 2;
-  margin-top: 36px;
+  font-size: 14px;
+}
+header a,
+.project-links a,
+.projects-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 .gallery-page main {
   margin-top: 72px;
@@ -122,9 +155,10 @@ h1 {
   transform: scale(1.15);
   transform-origin: 50% 69%;
 }
-.project h2 {
-  font-size: 16px;
-  font-weight: 500;
+.project h2,
+.project h3 {
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.015em;
 }
@@ -133,7 +167,12 @@ h1 {
   font-size: 14px;
   line-height: 1.6;
 }
-.project:hover h2 {
+.project-card > .project-detail {
+  color: #555;
+  margin-top: 12px;
+}
+.project:hover h2,
+.project:hover h3 {
   text-decoration: underline;
   text-underline-offset: 5px;
 }
@@ -165,19 +204,26 @@ h1 {
   display: inline-block;
   margin-top: 32px;
 }
+@media (min-width: 701px) and (max-width: 1000px) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 700px) {
   .page {
     padding: 30px 24px 64px;
   }
   .home-page main {
+    margin-top: 48px;
+  }
+  .intro {
     display: block;
-    margin-top: 80px;
+  }
+  .selected-projects {
+    margin-top: 56px;
   }
   .about {
     margin-top: 36px;
-  }
-  .projects-link {
-    display: inline-block;
   }
   .gallery {
     grid-template-columns: 1fr;

@@ -108,8 +108,8 @@ h1 {
   height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  transform: scale(1.6);
-  transform-origin: 50% 38%;
+  transform: scale(1.55);
+  transform-origin: 50% 37.5%;
   transition: transform 0.15s ease;
 }
 .project:hover .project-media img,
@@ -119,8 +119,8 @@ h1 {
 /* Online Scavenger Hunt's puzzle text spans most of the frame, so it uses a
    gentler rest zoom to keep the lines unclipped. */
 .project-media--gentle-zoom img {
-  transform: scale(1.2);
-  transform-origin: 50% 54%;
+  transform: scale(1.15);
+  transform-origin: 50% 69%;
 }
 .project h2 {
   font-size: 16px;

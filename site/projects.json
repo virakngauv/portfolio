@@ -32,5 +32,16 @@
     },
     "imageZoom": "gentle",
     "detail": "Progress is saved locally so players can leave and return to the hunt."
+  },
+  {
+    "title": "Work Timer",
+    "description": "Track work and break sessions at your own pace.",
+    "image": "assets/work-timer.png",
+    "url": "https://work-timer.virakngauv.com",
+    "github": {
+      "url": "https://github.com/virakngauv/work-timer",
+      "private": false
+    },
+    "detail": "Review session history and accumulated work and break time."
   }
 ]
